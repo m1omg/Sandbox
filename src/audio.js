@@ -1,6 +1,8 @@
 // All sound is synthesised with WebAudio at runtime (no audio files).
-// Music is an original loop scheduled against the audio clock, so its tempo is
-// independent of the display frame rate.
+// Music is generated procedurally (see music.js) and scheduled against the audio
+// clock, so its tempo is independent of the display frame rate.
+
+import { Composer } from './music.js';
 
 const NOTE = (n) => 440 * Math.pow(2, (n - 69) / 12); // MIDI note -> Hz
 
@@ -65,7 +67,9 @@ export class AudioSys {
   }
 
   // ---------- primitives ----------
-  tone({ type = 'sine', f0, f1 = f0, dur = 0.15, vol = 0.3, attack = 0.005, when = 0, dest, curve = 'exp' }) {
+  // `hold` keeps the note at full volume for most of its length (pads, held bass notes)
+  // instead of decaying straight away like a pluck.
+  tone({ type = 'sine', f0, f1 = f0, dur = 0.15, vol = 0.3, attack = 0.005, when = 0, dest, curve = 'exp', hold = false }) {
     if (!this.ctx) return;
     const ctx = this.ctx;
     const t = ctx.currentTime + when;
@@ -79,6 +83,7 @@ export class AudioSys {
     }
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(vol, t + attack);
+    if (hold) g.gain.setValueAtTime(vol, t + Math.max(attack, dur * 0.8));
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     osc.connect(g).connect(dest || this.sfxBus);
     osc.start(t);
@@ -218,11 +223,12 @@ export class AudioSys {
   }
 
   // ---------- music ----------
-  // An original four-bar loop in A minor (i - VI - III - VII) at 124 BPM.
+  // The procedural composer (music.js) writes an endless, ever-changing song.
   startMusic() {
     if (!this.ctx || this.musicPlaying) return;
     this.musicPlaying = true;
-    this.step = 0;
+    this.spb = 60 / 124 / 4; // seconds per sixteenth at 124 BPM
+    this.composer = new Composer(this, this.spb);
     this.nextTime = this.ctx.currentTime + 0.08;
     this.timer = setInterval(() => this.schedule(), 25);
   }
@@ -234,56 +240,15 @@ export class AudioSys {
 
   schedule() {
     if (!this.ctx || this.ctx.state !== 'running') return;
-    const spb = 60 / 124 / 4; // seconds per 16th
-    while (this.nextTime < this.ctx.currentTime + 0.12) {
-      this.playStep(this.step, this.nextTime - this.ctx.currentTime);
-      this.nextTime += spb;
-      this.step = (this.step + 1) % 64;
+    const now = this.ctx.currentTime;
+    // Background tabs throttle timers; skip the steps we missed instead of playing them all at once.
+    while (this.nextTime < now - 0.05) {
+      this.composer.advance();
+      this.nextTime += this.spb;
     }
-  }
-
-  playStep(step, when) {
-    const bus = this.musicBus;
-    const bar = Math.floor(step / 16);
-    const s = step % 16;
-    // chords: Am, F, C, G  (root MIDI notes for bass)
-    const roots = [45, 41, 48, 43];
-    const chords = [[57, 60, 64], [53, 57, 60], [55, 60, 64], [55, 59, 62]];
-    const root = roots[bar];
-    const chord = chords[bar];
-
-    // drums
-    if (s === 0 || s === 8 || (s === 10 && bar % 2 === 1)) {
-      this.tone({ type: 'sine', f0: 150, f1: 42, dur: 0.16, vol: 0.9, when, dest: bus });
-    }
-    if (s === 4 || s === 12) {
-      this.noise({ type: 'bandpass', f0: 1900, q: 0.7, dur: 0.13, vol: 0.45, when, dest: bus });
-      this.tone({ type: 'triangle', f0: 190, f1: 140, dur: 0.07, vol: 0.25, when, dest: bus });
-    }
-    if (s % 2 === 0) {
-      this.noise({ type: 'highpass', f0: 7500, dur: s % 4 === 2 ? 0.09 : 0.03, vol: s % 4 === 2 ? 0.16 : 0.1, when, dest: bus });
-    }
-
-    // bass: octave-bouncing eighths
-    if (s % 2 === 0) {
-      const n = s % 4 === 2 ? root + 12 : root;
-      this.tone({ type: 'sawtooth', f0: NOTE(n), dur: 0.11, vol: 0.2, when, dest: bus });
-      this.tone({ type: 'sine', f0: NOTE(n - 12), dur: 0.12, vol: 0.25, when, dest: bus });
-    }
-
-    // lead: a short rising motif, different on the last bar for a turnaround
-    const motif = bar === 3
-      ? { 0: 2, 3: 1, 6: 0, 8: 1, 10: 2, 12: 3, 14: 4 }
-      : { 0: 0, 3: 1, 6: 2, 8: 3, 11: 2, 14: 1 };
-    if (s in motif) {
-      const idx = motif[s];
-      const n = chord[idx % 3] + 12 * (1 + Math.floor(idx / 3));
-      this.tone({ type: 'square', f0: NOTE(n), dur: 0.14, vol: 0.05, when, dest: bus });
-      this.tone({ type: 'triangle', f0: NOTE(n + 12), dur: 0.1, vol: 0.03, when, dest: bus });
-    }
-    // soft pad on each bar
-    if (s === 0) {
-      for (const n of chord) this.tone({ type: 'triangle', f0: NOTE(n), dur: 1.8, vol: 0.035, attack: 0.3, when, dest: bus });
+    while (this.nextTime < now + 0.12) {
+      this.composer.step(this.nextTime - now);
+      this.nextTime += this.spb;
     }
   }
 }

@@ -36,7 +36,7 @@ Any static host works too. The live copy is served by GitHub Pages straight from
 - **Hoverboards** absorb one crash and last 30 s. You start with 3; buy more in the shop.
 - **Shop:** spend coins to extend power-up durations (5 levels each) and buy hoverboards. Progress, best score and settings are saved in `localStorage`.
 - **Fair procedural levels:** the generator guarantees at most two lanes are ever walled off by trains and clears the full approach path of every oncoming train.
-- **Synthesised audio:** WebAudio sound effects and an original music loop, with no audio files.
+- **Synthesised audio:** WebAudio sound effects, no audio files. The music is composed procedurally while you play: it moves between intro, verse, chorus, bridge and breakdown sections, each with its own chord progression, drum and bass patterns and a newly generated melody, plus fills, risers and the occasional key change, so it doesn't loop.
 - **Responsive:** works in landscape and portrait, with mouse, keyboard or touch.
 
 ## Frame-rate independence
@@ -59,7 +59,8 @@ src/
   pickups.js        coins (instanced) and power-up items
   world.js          track segments, walls, props, skyline, lighting
   effects.js        sprite particles
-  audio.js          synthesised SFX and music
+  audio.js          synthesised SFX and the music scheduler
+  music.js          procedural composer (song sections, chords, melodies)
   input.js          keyboard and swipe input
   ui.js             HUD, menus and shop
   config.js         tuning constants
