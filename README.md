@@ -4,6 +4,8 @@ A 3D endless runner for the browser. Sprint down a sunny rail yard as **Kit**, a
 
 All characters, names, art, sound and music in this project are original.
 
+**Play online:** https://m1omg.github.io/Sandbox/
+
 ## Playing
 
 The game is a static site with no build step. ES modules and model loading need HTTP, so serve the folder rather than opening `index.html` directly:
@@ -13,7 +15,7 @@ python3 -m http.server 8000
 # then open http://localhost:8000
 ```
 
-Any static host works too (GitHub Pages, Netlify and so on).
+Any static host works too. The live copy is served by GitHub Pages straight from the `main` branch root (*Settings → Pages → Deploy from a branch → `main` / `(root)`*). The empty `.nojekyll` file tells Pages to serve the files as-is.
 
 ### Controls
 
