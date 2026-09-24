@@ -3,6 +3,12 @@ import { Rng, clamp, lerp } from './util.js';
 
 const L = [0, 1, 2];
 
+// Relative spawn weights. The distance between power-ups is divided by the weight total,
+// so each weight directly sets that power-up's absolute rate (a weight of 1 would mean one
+// every ~340 m on average): raising one never makes the others rarer.
+const POWERUP_WEIGHTS = [['jetpack', 0.275], ['sneakers', 0.25], ['magnet', 0.3], ['multiplier', 0.23]];
+const POWERUP_WEIGHT_TOTAL = POWERUP_WEIGHTS.reduce((sum, [, w]) => sum + w, 0);
+
 // Procedural level generator. It walks a cursor ahead of the runner and emits "rows"
 // of obstacles, keeping these guarantees so every run is always survivable:
 //   * at most two lanes are ever walled off by trains at the same distance,
@@ -22,7 +28,7 @@ export class Generator {
     this.blockedUntil = [-1e9, -1e9, -1e9];
     this.lastEnd = [-1e9, -1e9, -1e9];      // last obstacle or coin line per lane
     this.lastObstacle = [-1e9, -1e9, -1e9]; // last obstacle only
-    this.nextPowerup = s + this.rng.rand(170, 260);
+    this.nextPowerup = s + this.rng.rand(170, 260) / POWERUP_WEIGHT_TOTAL;
     // opening coin line in the middle lane
     const end = this.pickups.addCoinLine(1, s + 18, 12, 1.8);
     this.lastEnd[1] = end + 2;
@@ -191,10 +197,10 @@ export class Generator {
     const cand = this.rng.shuffle(L.filter((l) => this.free(l, ps, 3)));
     if (!cand.length) return;
     const l = cand[0];
-    const type = this.rng.weighted([['jetpack', 0.22], ['sneakers', 0.25], ['magnet', 0.3], ['multiplier', 0.23]]);
+    const type = this.rng.weighted(POWERUP_WEIGHTS);
     this.pickups.addPowerup(type, this.laneX(l), 0.6, ps);
     this.lastEnd[l] = Math.max(this.lastEnd[l], ps + 4);
-    this.nextPowerup = s + this.rng.rand(260, 420);
+    this.nextPowerup = s + this.rng.rand(260, 420) / POWERUP_WEIGHT_TOTAL;
   }
 
   laneX(l) {
