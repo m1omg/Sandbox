@@ -1,0 +1,38 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>body{margin:0;background:#8cf}</style>
+<script type="importmap">{"imports":{"three":"../vendor/three/three.module.js","three/addons/":"../vendor/three/addons/"}}</script>
+</head><body>
+<script type="module">
+// Dev harness: renders the runner in each procedural pose side by side.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { Player } from '../src/player.js';
+const params = new URLSearchParams(location.search);
+const side = params.get('side') === '1';
+const r = new THREE.WebGLRenderer({ antialias: true }); r.setSize(1200, 420); document.body.appendChild(r.domElement);
+r.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x88ccff);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 1.3));
+const d = new THREE.DirectionalLight(0xffffff, 1.8); d.position.set(3, 6, 5); scene.add(d);
+const grid = new THREE.GridHelper(40, 40); scene.add(grid);
+const cam = new THREE.PerspectiveCamera(30, 1200 / 420, 0.1, 100);
+if (side) { cam.position.set(14, 1.2, -0.0); cam.lookAt(0, 0.8, 0); } else { cam.position.set(0, 1.4, 14); cam.lookAt(0, 0.8, 0); }
+const loader = new GLTFLoader();
+const poses = [null, 'jump', 'tuck', 'surf', 'fly', 'crash'];
+for (const [i, pose] of poses.entries()) {
+  const g = await loader.loadAsync('../assets/models/kit.glb');
+  const p = new Player(scene, g);
+  const off = (i - (poses.length - 1) / 2) * 2.0;
+  p.prevS = p.s = side ? off : 0; p.prevX = p.x = side ? 0 : off;
+  if (pose) p.rig.weights[pose] = 1;
+  if (pose === 'surf') p.boardT = 10;
+  if (pose === 'fly') p.jetpackT = 5;
+  p.updateVisual(0.0001, 1, 0.3, 17, () => 0);
+  for (const k of Object.keys(p.rig.weights)) p.rig.weights[k] = pose === k ? 1 : 0;
+  p.mixer.update(0.2); p.rig.apply();
+  p.pivot.rotation.set(0, 0, 0);
+  if (pose === 'tuck') p.holder.position.y = -0.75 - 0.3;
+}
+r.render(scene, cam);
+window.__done = true;
+</script></body></html>

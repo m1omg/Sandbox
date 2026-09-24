@@ -1,0 +1,32 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>body{margin:0;background:#8cf}</style>
+<script type="importmap">{"imports":{"three":"../vendor/three/three.module.js","three/addons/":"../vendor/three/addons/"}}</script>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const r = new THREE.WebGLRenderer({antialias:true}); r.setSize(900,500); document.body.appendChild(r.domElement);
+r.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x88ccff);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 1.2));
+const d = new THREE.DirectionalLight(0xffffff, 1.8); d.position.set(3,6,5); scene.add(d);
+const cam = new THREE.PerspectiveCamera(35, 900/500, 0.1, 100); cam.position.set(0,1.2,7); cam.lookAt(0,0.9,0);
+const loader = new GLTFLoader();
+const info = {};
+const mixers = [];
+const params = new URLSearchParams(location.search);
+const t = parseFloat(params.get('t')||'0.2');
+const rotY = parseFloat(params.get('rot')||'0');
+const fixMat = params.get('fix') === '1';
+for (const [i,name] of ['kit','warden'].entries()) {
+  const g = await loader.loadAsync(`../assets/models/${name}.glb`);
+  const root = g.scene; root.position.x = i===0? -1.2: 1.2; root.rotation.y = rotY;
+  scene.add(root);
+  const bones=[]; root.traverse(o=>{ if(o.isBone) bones.push(o.name); if(o.isMesh && fixMat){ const m=o.material; o.material=new THREE.MeshStandardMaterial({map:m.map, roughness:0.85, metalness:0}); } if(o.isMesh) info[name+'_mat']={type:o.material.type, emissive:o.material.emissive?.getHexString(), emap:!!o.material.emissiveMap}; });
+  const box = new THREE.Box3().setFromObject(root);
+  info[name] = {bones, clips: g.animations.map(a=>({name:a.name,duration:a.duration,tracks:a.tracks.length, trackNames:a.tracks.slice(0,6).map(t=>t.name)})), box:[box.min.toArray(), box.max.toArray()]};
+  if (g.animations.length) { const m = new THREE.AnimationMixer(root); m.clipAction(g.animations[0]).play(); m.update(t); mixers.push(m); }
+}
+r.render(scene, cam);
+window.__info = info; window.__done = true;
+</script></body></html>
