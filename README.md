@@ -34,9 +34,10 @@ Any static host works too. The live copy is served by GitHub Pages straight from
 - **Stumbles:** clip an obstacle from the side and you bounce back while the warden closes in. Stumble again while he's close and you're caught.
 - **Power-ups:** Jetpack (fly above everything along a sky coin trail), Spring Sneakers (super jumps, reach roofs from the ground), Coin Magnet, 2x Score.
 - **Hoverboards** absorb one crash and last 30 s. You start with 3; buy more in the shop.
-- **Shop:** spend coins to extend power-up durations (5 levels each) and buy hoverboards. Progress, best score and settings are saved in `localStorage`.
+- **Shop:** spend coins to extend power-up durations (5 levels each) and buy hoverboards. Upgrades are permanent and apply automatically whenever you pick up that power-up. Bought hoverboards are used during a run with E / Shift, a double-tap, or the board button in the bottom-right corner. Progress, best score and settings are saved in `localStorage`.
 - **Fair procedural levels:** the generator guarantees at most two lanes are ever walled off by trains and clears the full approach path of every oncoming train.
 - **Synthesised audio:** WebAudio sound effects, no audio files. The music is composed procedurally while you play: it moves between intro, verse, chorus, bridge and breakdown sections, each with its own chord progression, drum and bass patterns and a newly generated melody, plus fills, risers and the occasional key change, so it doesn't loop.
+- **City rail-yard setting:** grass verges with shrubs, graffiti walls, rows of apartment blocks with rooftop water towers, open stretches with trees behind a fence, and yellow signal gantries over the tracks. Buildings are regenerated as the track scrolls, so the street never repeats exactly.
 - **Responsive:** works in landscape and portrait, with mouse, keyboard or touch.
 
 ## Frame-rate independence
@@ -68,7 +69,7 @@ src/
   util.js           helpers and seeded RNG
 assets/
   models/           kit.glb, warden.glb (rigged, with run animation)
-  textures/         train liveries, graffiti wall, gravel, skyline, logo
+  textures/         train liveries, graffiti wall, gravel, grass, building facades, skyline, logo
   concept/          character concept art the 3D models were built from
 tools/              dev pages for checking models and poses
 vendor/three/       three.js r186 (MIT)
@@ -78,7 +79,7 @@ vendor/three/       three.js r186 (MIT)
 
 Assets were generated for this project with Higgsfield:
 
-- **Concept art, textures and logo:** GPT Image 2.5. The red and green train liveries are hue-shifted copies of the blue one.
+- **Concept art, textures and logo:** GPT Image 2.5, including the grass and the three apartment facades. The red and green train liveries are hue-shifted copies of the blue one.
 - **3D characters:** Meshy image-to-3D from the concept art, auto-rigged with a humanoid skeleton and a run cycle. Textures were downscaled to 1024 px JPEG with [glTF-Transform](https://gltf-transform.dev/). Jump, roll, hoverboard, jetpack and crash poses are layered on procedurally at runtime.
 - **Everything else** (tracks, trains, hurdles, coins, power-up items, particles) is built procedurally in code.
 

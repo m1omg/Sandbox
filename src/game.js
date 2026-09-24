@@ -1,7 +1,7 @@
 import {
-  SPEED_START, SPEED_MAX, SPEED_TAU, CHASE_TIME, HOVERBOARD_TIME, POWERUPS, powerupDuration,
+  SPEED_START, SPEED_MAX, SPEED_TAU, CHASE_TIME, HOVERBOARD_TIME, POWERUPS, powerupDuration, DESPAWN_BEHIND,
 } from './config.js';
-import { World } from './world.js';
+import { World, MENU_BEHIND } from './world.js';
 import { Obstacles } from './obstacles.js';
 import { Pickups } from './pickups.js';
 import { Generator } from './generator.js';
@@ -36,6 +36,7 @@ export class Game {
 
     this.time = 0;
     this.camBlend = 0;
+    this.camB = 0;
     this.camX = 0;
     this.camY = 1.6;
     this.shake = 0;
@@ -59,7 +60,7 @@ export class Game {
     this.chaser.gap = 3.4;
     this.chaser.prevGap = 3.4;
     this.speed = MENU_SPEED;
-    this.world.reset(s);
+    this.world.reset(s, MENU_BEHIND);
   }
 
   // `seed` makes a run reproducible (used by tests); normal runs get a random level.
@@ -347,7 +348,8 @@ export class Game {
     this.pickups.render(this.time, alpha, ps);
     this.effects.update(animDt);
     this.updateCamera(dt);
-    this.world.update(ps, this.camera);
+    // the title camera looks back down the track, so keep more of it behind the runner
+    this.world.update(ps, this.camera, lerp(MENU_BEHIND, DESPAWN_BEHIND, this.camB));
     if (this.state !== 'menu') this.ui.updateHud(this);
   }
 
@@ -357,12 +359,17 @@ export class Game {
     const target = this.state === 'menu' ? 0 : 1;
     this.camBlend = damp(this.camBlend, target, 1.8, dt);
     const b = smoothstep(clamp(this.camBlend, 0, 1));
+    this.camB = b;
     const flying = this.player.jetpackT > 0;
     const portrait = cam.aspect < 1;
 
     // gameplay camera: behind and above the runner, lagging slightly on lane changes
     this.camX = damp(this.camX, p.x * 0.85, 9, dt);
-    this.camY = damp(this.camY, (portrait ? 3.9 : 3.35) + p.y * (flying ? 0.95 : 0.75), flying ? 3 : 6, dt);
+    // never skim just above a train roof (e.g. right after dropping off the end of one)
+    const roofBelow = this.obstacles.groundAt(cam.position.x, -cam.position.z, 100);
+    const minY = roofBelow > 0 ? roofBelow + 1.6 : 0;
+    const wantY = Math.max((portrait ? 3.9 : 3.35) + p.y * (flying ? 0.95 : 0.75), minY);
+    this.camY = damp(this.camY, wantY, flying ? 3 : 6, dt);
 
     // title camera: in front of the runner; on wide screens she sits left of the menu
     const menuX = p.x + (portrait ? -0.4 : -0.9);

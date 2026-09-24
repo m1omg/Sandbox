@@ -46,10 +46,16 @@ function unlockAudio() {
 window.addEventListener('pointerdown', unlockAudio);
 window.addEventListener('keydown', unlockAudio);
 
+const touchDevice = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+
 function startRun() {
   unlockAudio();
   game.startRun();
   ui.showHud();
+  // remind newer players how to use the hoverboards they own
+  if (save.boards > 0 && save.runs < 5) {
+    ui.toast(touchDevice ? 'Double-tap to ride a hoverboard' : 'Press E to ride a hoverboard', 2800);
+  }
 }
 
 function toMenu() {

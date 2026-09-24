@@ -11,6 +11,10 @@ const TEXTURES = {
   wall: 'assets/textures/graffiti_wall.jpg',
   gravel: 'assets/textures/gravel.jpg',
   skyline: 'assets/textures/skyline.jpg',
+  grass: 'assets/textures/grass.jpg',
+  facadeBrick: 'assets/textures/facade_brick.jpg',
+  facadePeach: 'assets/textures/facade_peach.jpg',
+  facadeBlue: 'assets/textures/facade_blue.jpg',
 };
 
 const MODELS = {
@@ -23,7 +27,7 @@ export async function loadAssets(renderer, onProgress) {
   manager.onProgress = (_url, loaded, total) => onProgress && onProgress(loaded / total);
   const texLoader = new THREE.TextureLoader(manager);
   const gltfLoader = new GLTFLoader(manager);
-  const maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  const maxAniso = Math.min(16, renderer.capabilities.getMaxAnisotropy());
 
   const textures = {};
   const texJobs = Object.entries(TEXTURES).map(async ([key, url]) => {
