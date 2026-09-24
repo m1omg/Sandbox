@@ -401,6 +401,7 @@ kbd {
 .loadbar i { display: block; height: 100%; width: 0; background: var(--yellow); transition: width 0.2s; }
 
 .bank { font-size: 26px; font-weight: 700; }
+.shop-note { margin: -4px 0 0; font-size: 14px; opacity: 0.8; }
 
 .shop-list {
   list-style: none;

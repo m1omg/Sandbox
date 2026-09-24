@@ -124,7 +124,7 @@ export class UI {
         <span class="ico" style="background:${POWERUPS[type].color}">${ICONS[type]}</span>
         <span class="info">
           <span class="name">${POWERUPS[type].label}</span>
-          <span class="desc">Lasts ${powerupDuration(type, lvl).toFixed(1)}s${maxed ? '' : ` → ${powerupDuration(type, lvl + 1).toFixed(1)}s`}</span>
+          <span class="desc">Lasts ${powerupDuration(type, lvl).toFixed(1)}s${maxed ? '' : ` → ${powerupDuration(type, lvl + 1).toFixed(1)}s`} whenever you pick one up</span>
           <span class="pips">${pips}</span>
         </span>
         <button class="btn primary" ${maxed || save.coins < cost ? 'disabled' : ''}>${maxed ? 'Maxed' : `<span class="coin-icon small"></span>${formatNumber(cost)}`}</button>`;
@@ -137,7 +137,7 @@ export class UI {
       <span class="ico" style="background:linear-gradient(160deg,#12c2c9,#7b3fe4)">${ICONS.board}</span>
       <span class="info">
         <span class="name">Hoverboard ×1</span>
-        <span class="desc">Absorbs one crash, lasts ${HOVERBOARD_TIME}s. You own ${save.boards}.</span>
+        <span class="desc">Absorbs one crash, lasts ${HOVERBOARD_TIME}s. You own ${save.boards}. Ride one during a run: press E or Shift, double-tap, or tap the board button (bottom right).</span>
       </span>
       <button class="btn primary" ${save.coins < HOVERBOARD_COST ? 'disabled' : ''}><span class="coin-icon small"></span>${HOVERBOARD_COST}</button>`;
     li.querySelector('button').addEventListener('click', () => this.emit('buy', 'board'));
@@ -154,12 +154,12 @@ export class UI {
     s.setAttribute('aria-pressed', String(save.sfx));
   }
 
-  toast(msg) {
+  toast(msg, ms = 1400) {
     const t = this.el.toast;
     t.textContent = msg;
     t.classList.add('show');
     clearTimeout(this.toastTimer);
-    this.toastTimer = setTimeout(() => t.classList.remove('show'), 1400);
+    this.toastTimer = setTimeout(() => t.classList.remove('show'), ms);
   }
 
   showCountdown(n) {
