@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Rail Rascals</title>
+  <meta name="description" content="Rail Rascals — a 3D endless runner through a sunny rail yard.">
+  <meta name="theme-color" content="#1b2a4a">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
+  </script>
+</head>
+<body>
+  <div id="app">
+    <canvas id="game" aria-label="Rail Rascals game view"></canvas>
+    <div id="touch" aria-hidden="true"></div>
+
+    <!-- In-game HUD -->
+    <div id="hud" class="hidden">
+      <div class="hud-top">
+        <button id="btn-pause" class="icon-btn" aria-label="Pause">
+          <svg viewBox="0 0 24 24" width="22" height="22"><rect x="5" y="4" width="5" height="16" rx="1.5" fill="currentColor"/><rect x="14" y="4" width="5" height="16" rx="1.5" fill="currentColor"/></svg>
+        </button>
+        <div class="hud-right">
+          <div class="pill score-pill"><span id="score">0</span><span id="mult" class="mult">x1</span></div>
+          <div class="pill coin-pill"><span class="coin-icon"></span><span id="coins">0</span></div>
+        </div>
+      </div>
+      <div id="powerups"></div>
+      <button id="btn-board" class="board-btn" aria-label="Use hoverboard">
+        <span class="board-icon"></span>
+        <span id="board-count">0</span>
+        <span id="board-bar" class="board-bar"><i></i></span>
+      </button>
+      <div id="toast" class="toast"></div>
+      <div id="countdown" class="countdown hidden"></div>
+    </div>
+
+    <!-- Title screen -->
+    <section id="menu" class="screen menu hidden">
+      <img class="logo" src="assets/textures/logo.webp" alt="Rail Rascals">
+      <div class="menu-bottom">
+        <div class="menu-stats">
+          <div class="stat"><span class="label">Best</span><span id="menu-best" class="value">0</span></div>
+          <div class="stat"><span class="label">Coins</span><span class="value"><span class="coin-icon small"></span><span id="menu-coins">0</span></span></div>
+          <div class="stat"><span class="label">Boards</span><span id="menu-boards" class="value">0</span></div>
+        </div>
+        <button id="btn-play" class="btn big primary">Play</button>
+        <div class="row">
+          <button id="btn-shop" class="btn">Shop</button>
+          <button id="btn-help" class="btn">How to play</button>
+        </div>
+        <div class="row toggles">
+          <button id="btn-music" class="chip" aria-pressed="true">Music: On</button>
+          <button id="btn-sfx" class="chip" aria-pressed="true">Sound: On</button>
+        </div>
+        <p class="hint">Press <kbd>Space</kbd> or tap Play to start</p>
+      </div>
+    </section>
+
+    <!-- Pause -->
+    <section id="pause" class="screen hidden">
+      <div class="panel">
+        <h2>Paused</h2>
+        <button id="btn-resume" class="btn big primary">Resume</button>
+        <div class="row">
+          <button id="btn-restart" class="btn">Restart</button>
+          <button id="btn-quit" class="btn">Main menu</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Game over -->
+    <section id="over" class="screen hidden">
+      <div class="panel">
+        <h2 id="over-title">Busted!</h2>
+        <div id="over-newbest" class="badge hidden">New best!</div>
+        <div class="results">
+          <div class="stat"><span class="label">Score</span><span id="over-score" class="value">0</span></div>
+          <div class="stat"><span class="label">Coins</span><span class="value"><span class="coin-icon small"></span><span id="over-coins">0</span></span></div>
+          <div class="stat"><span class="label">Best</span><span id="over-best" class="value">0</span></div>
+        </div>
+        <button id="btn-again" class="btn big primary">Run again</button>
+        <div class="row">
+          <button id="btn-over-shop" class="btn">Shop</button>
+          <button id="btn-over-menu" class="btn">Main menu</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Shop -->
+    <section id="shop" class="screen hidden">
+      <div class="panel wide">
+        <h2>Shop</h2>
+        <div class="bank"><span class="coin-icon small"></span><span id="shop-coins">0</span></div>
+        <ul id="shop-list" class="shop-list"></ul>
+        <button id="btn-shop-back" class="btn">Back</button>
+      </div>
+    </section>
+
+    <!-- Help -->
+    <section id="help" class="screen hidden">
+      <div class="panel wide">
+        <h2>How to play</h2>
+        <div class="help-grid">
+          <div>
+            <h3>Keyboard</h3>
+            <ul>
+              <li><kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd> — switch lanes</li>
+              <li><kbd>↑</kbd> <kbd>W</kbd> <kbd>Space</kbd> — jump</li>
+              <li><kbd>↓</kbd> <kbd>S</kbd> — roll (drops you fast in mid-air)</li>
+              <li><kbd>E</kbd> or <kbd>Shift</kbd> — hoverboard</li>
+              <li><kbd>P</kbd> or <kbd>Esc</kbd> — pause</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Touch</h3>
+            <ul>
+              <li>Swipe left / right / up / down</li>
+              <li>Double-tap for a hoverboard</li>
+            </ul>
+            <h3>Tips</h3>
+            <ul>
+              <li>Jump the red &amp; white hurdles, roll under the yellow “DUCK!” gates.</li>
+              <li>Ramps lead up onto train roofs — the safest place to be.</li>
+              <li>Trains with glowing headlights are coming at you.</li>
+              <li>Clip a train or hurdle from the side and you stumble. Stumble twice while the warden is close and you're caught!</li>
+              <li>A hoverboard absorbs one crash.</li>
+            </ul>
+          </div>
+        </div>
+        <button id="btn-help-back" class="btn">Back</button>
+      </div>
+    </section>
+
+    <!-- Loading -->
+    <section id="loading" class="screen">
+      <img class="logo" src="assets/textures/logo.webp" alt="Rail Rascals">
+      <div class="loadbar"><i id="loadbar"></i></div>
+      <p id="load-msg" class="hint">Loading…</p>
+    </section>
+  </div>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
