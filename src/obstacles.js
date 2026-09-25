@@ -6,6 +6,9 @@ import {
 } from './config.js';
 import { stripeTexture, radialTexture, canvasTexture } from './assets.js';
 import { pick } from './util.js';
+import { CLASSIC } from './theme.js';
+import { toonMat } from './toon.js';
+import { buildToonCars } from './trains_toon.js';
 
 export const trainLength = (cars) => cars * CAR_LEN + (cars - 1) * CAR_GAP;
 
@@ -46,21 +49,28 @@ export class Obstacles {
     this.scene = scene;
     this.list = [];
     const t = assets.textures;
+    // Lambert for the textured city look, cel shading for the classic look.
+    const mat = CLASSIC ? (params) => toonMat(params) : (params) => new THREE.MeshLambertMaterial(params);
 
-    const liveries = [
-      [t.trainSide, t.trainFront],
-      [t.trainSideRed, t.trainFrontRed],
-      [t.trainSideGreen, t.trainFrontGreen],
-    ];
-    const roof = new THREE.MeshLambertMaterial({ color: 0x9aa4ae });
-    const bottom = new THREE.MeshLambertMaterial({ color: 0x2b2f36 });
-    this.liveries = liveries.map(([side, front]) => {
-      side.wrapS = THREE.RepeatWrapping;
-      side.repeat.set(2, 1);
-      const sideMat = new THREE.MeshLambertMaterial({ map: side });
-      const frontMat = new THREE.MeshLambertMaterial({ map: front });
-      return [sideMat, sideMat, roof, bottom, frontMat, frontMat];
-    });
+    if (CLASSIC) {
+      this.toonCars = buildToonCars();
+      this.toonCarMat = toonMat({ vertexColors: true });
+    } else {
+      const liveries = [
+        [t.trainSide, t.trainFront],
+        [t.trainSideRed, t.trainFrontRed],
+        [t.trainSideGreen, t.trainFrontGreen],
+      ];
+      const roof = new THREE.MeshLambertMaterial({ color: 0x9aa4ae });
+      const bottom = new THREE.MeshLambertMaterial({ color: 0x2b2f36 });
+      this.liveries = liveries.map(([side, front]) => {
+        side.wrapS = THREE.RepeatWrapping;
+        side.repeat.set(2, 1);
+        const sideMat = new THREE.MeshLambertMaterial({ map: side });
+        const frontMat = new THREE.MeshLambertMaterial({ map: front });
+        return [sideMat, sideMat, roof, bottom, frontMat, frontMat];
+      });
+    }
 
     const carGeo = new THREE.BoxGeometry(TRAIN_W, TRAIN_H - 0.05, CAR_LEN);
     carGeo.translate(0, (TRAIN_H - 0.05) / 2 + 0.05, -CAR_LEN / 2);
@@ -70,7 +80,7 @@ export class Obstacles {
     this.roofTopGeo = roofTop;
     this.roofTopMat = new THREE.MeshLambertMaterial({ color: 0x7d8792 });
     this.couplerGeo = new THREE.BoxGeometry(1.2, 1.6, CAR_GAP + 0.1);
-    this.couplerMat = new THREE.MeshLambertMaterial({ color: 0x33373f });
+    this.couplerMat = mat({ color: 0x33373f });
 
     this.shadowTex = radialTexture('rgba(0,0,0,0.55)', 'rgba(0,0,0,0)', 64);
     this.shadowMat = new THREE.MeshBasicMaterial({ map: this.shadowTex, transparent: true, depthWrite: false });
@@ -89,18 +99,18 @@ export class Obstacles {
     hazard.repeat.set(1, 3);
     this.rampGeo = wedgeGeometry(TRAIN_W - 0.1, TRAIN_H, RAMP_LEN);
     this.rampMats = [
-      new THREE.MeshLambertMaterial({ map: hazard }),
-      new THREE.MeshLambertMaterial({ color: 0x5b6470 }),
+      mat({ map: hazard }),
+      mat({ color: 0x5b6470 }),
     ];
 
     // barriers
     const redWhite = stripeTexture('#e8322f', '#ffffff', 6);
     const yellowBlack = stripeTexture('#ffc400', '#1f1f1f', 6);
-    const post = new THREE.MeshLambertMaterial({ color: 0xe9e9e9 });
-    const darkPost = new THREE.MeshLambertMaterial({ color: 0x4a5563 });
+    const post = mat({ color: 0xe9e9e9 });
+    const darkPost = mat({ color: 0x4a5563 });
     this.barrierMats = {
-      low: new THREE.MeshLambertMaterial({ map: redWhite }),
-      high: new THREE.MeshLambertMaterial({ map: yellowBlack }),
+      low: mat({ map: redWhite }),
+      high: mat({ map: yellowBlack }),
       post,
       darkPost,
       light: new THREE.MeshBasicMaterial({ color: 0xff3b2f }),
@@ -130,15 +140,22 @@ export class Obstacles {
   spawnTrain(lane, s0, cars, { moving = false, ramp = false } = {}) {
     const len = trainLength(cars);
     const group = new THREE.Group();
-    const mats = pick(this.liveries);
+    const mats = CLASSIC ? null : pick(this.liveries);
+    const toonCar = CLASSIC ? pick(this.toonCars) : null;
     for (let i = 0; i < cars; i++) {
       const z = -i * (CAR_LEN + CAR_GAP);
-      const car = new THREE.Mesh(this.carGeo, mats);
-      car.position.z = z;
-      group.add(car);
-      const top = new THREE.Mesh(this.roofTopGeo, this.roofTopMat);
-      top.position.z = z;
-      group.add(top);
+      if (CLASSIC) {
+        const car = new THREE.Mesh(toonCar, this.toonCarMat);
+        car.position.z = z;
+        group.add(car);
+      } else {
+        const car = new THREE.Mesh(this.carGeo, mats);
+        car.position.z = z;
+        group.add(car);
+        const top = new THREE.Mesh(this.roofTopGeo, this.roofTopMat);
+        top.position.z = z;
+        group.add(top);
+      }
       if (i > 0) {
         const c = new THREE.Mesh(this.couplerGeo, this.couplerMat);
         c.position.set(0, 1.0, z + CAR_GAP / 2);
@@ -150,9 +167,9 @@ export class Obstacles {
     shadow.position.set(0, 0.03, -len / 2);
     group.add(shadow);
     if (moving) {
-      for (const x of [-0.83, 0.83]) {
+      for (const x of CLASSIC ? [-0.72, 0.72] : [-0.83, 0.83]) {
         const glow = new THREE.Sprite(this.glowMat);
-        glow.position.set(x, 1.12, 0.15);
+        glow.position.set(x, CLASSIC ? 1.0 : 1.12, 0.15);
         glow.scale.set(1.6, 1.6, 1);
         group.add(glow);
       }

@@ -2,6 +2,8 @@ import {
   SPEED_START, SPEED_MAX, SPEED_TAU, CHASE_TIME, HOVERBOARD_TIME, POWERUPS, powerupDuration, DESPAWN_BEHIND,
 } from './config.js';
 import { World, MENU_BEHIND } from './world.js';
+import { ClassicWorld } from './world_classic.js';
+import { CLASSIC } from './theme.js';
 import { Obstacles } from './obstacles.js';
 import { Pickups } from './pickups.js';
 import { Generator } from './generator.js';
@@ -16,6 +18,12 @@ const overlap = (a, b) =>
 
 const MENU_SPEED = 9;
 
+// Gameplay camera framing per look: the classic look sits higher and looks down steeper.
+// maxY keeps the classic camera under its overhead wires (about 9.5 m) during jetpack flights.
+const CAM = CLASSIC
+  ? { y: 4.9, yPortrait: 5.6, dist: 5.4, distPortrait: 6.0, lookY: 0.35, ahead: 7, maxY: 8.9 }
+  : { y: 3.35, yPortrait: 3.9, dist: 5.9, distPortrait: 6.3, lookY: 1.0, ahead: 9, maxY: Infinity };
+
 export class Game {
   constructor({ scene, camera, assets, audio, save, ui, input }) {
     this.scene = scene;
@@ -25,7 +33,7 @@ export class Game {
     this.ui = ui;
     this.input = input;
 
-    this.world = new World(scene, assets);
+    this.world = CLASSIC ? new ClassicWorld(scene) : new World(scene, assets);
     this.obstacles = new Obstacles(scene, assets);
     this.pickups = new Pickups(scene);
     this.generator = new Generator(this.obstacles, this.pickups);
@@ -368,7 +376,7 @@ export class Game {
     // never skim just above a train roof (e.g. right after dropping off the end of one)
     const roofBelow = this.obstacles.groundAt(cam.position.x, -cam.position.z, 100);
     const minY = roofBelow > 0 ? roofBelow + 1.6 : 0;
-    const wantY = Math.max((portrait ? 3.9 : 3.35) + p.y * (flying ? 0.95 : 0.75), minY);
+    const wantY = Math.min(CAM.maxY, Math.max((portrait ? CAM.yPortrait : CAM.y) + p.y * (flying ? 0.95 : 0.75), minY));
     this.camY = damp(this.camY, wantY, flying ? 3 : 6, dt);
 
     // title camera: in front of the runner; on wide screens she sits left of the menu
@@ -378,7 +386,7 @@ export class Game {
 
     // orbit from the front (theta = PI) round the side to behind (theta = 0)
     const theta = Math.PI * (1 - b);
-    const dist = lerp(menuDist, portrait ? 6.3 : 5.9, b);
+    const dist = lerp(menuDist, portrait ? CAM.distPortrait : CAM.dist, b);
     const swing = Math.sin(theta);
     this.shake = Math.max(0, this.shake - dt);
     const sh = this.shake * 0.9;
@@ -389,8 +397,8 @@ export class Game {
     );
     cam.lookAt(
       lerp(menuLookX, this.camX, b),
-      lerp((portrait ? 0.95 : 1.0) + p.y, 1.0 + p.y * 0.62, b),
-      p.z - 9 * b,
+      lerp((portrait ? 0.95 : 1.0) + p.y, CAM.lookY + p.y * 0.62, b),
+      p.z - CAM.ahead * b,
     );
   }
 

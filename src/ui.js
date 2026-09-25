@@ -42,6 +42,7 @@ export class UI {
     on('btn-help', 'help');
     on('btn-music', 'toggleMusic');
     on('btn-sfx', 'toggleSfx');
+    on('btn-theme', 'toggleTheme');
     on('btn-pause', 'pause');
     on('btn-resume', 'resume');
     on('btn-restart', 'restart');
@@ -143,6 +144,11 @@ export class UI {
     li.querySelector('button').addEventListener('click', () => this.emit('buy', 'board'));
     list.appendChild(li);
     this.show('shop');
+  }
+
+  setTheme(classic) {
+    $('btn-theme').textContent = `Look: ${classic ? 'Classic' : 'City'}`;
+    document.body.classList.toggle('classic', classic);
   }
 
   setToggles(save) {

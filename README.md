@@ -4,7 +4,14 @@ A 3D endless runner for the browser. Sprint down a sunny rail yard as **Kit**, a
 
 All characters, names, art, sound and music in this project are original.
 
-**Play online:** https://m1omg.github.io/Sandbox/
+**Play online:** https://m1omg.github.io/Sandbox/ — or the classic look: https://m1omg.github.io/Sandbox/?theme=classic
+
+## Two looks
+
+- **City** (default): textured trains, graffiti walls and a row of apartment blocks along the line.
+- **Classic**: a bright, cel-shaded rail line: sandy track bed with chunky sleepers, overhead-line gantries and sagging wires, red arched retaining walls topped with hedges, avenues of round trees, rows of gabled houses behind picket fences, red-and-white signal posts, and toon trains (four passenger liveries plus a ribbed freight wagon). The camera sits higher and looks down more steeply. Everything in this look is built from coloured geometry, so it loads no textures at all.
+
+Switch with the **Look** button on the title screen (the choice is remembered), or with `?theme=classic` / `?theme=city` in the URL. Gameplay, progress and the shop are shared between the two.
 
 ## Playing
 
@@ -58,7 +65,11 @@ src/
   generator.js      procedural level generator
   obstacles.js      trains, ramps, hurdles, gates, ground and collider queries
   pickups.js        coins (instanced) and power-up items
-  world.js          track segments, walls, props, skyline, lighting
+  world.js          city look: track segments, walls, buildings, skyline, lighting
+  world_classic.js  classic look: cel-shaded track, overhead line, walls, trees, houses
+  trains_toon.js    toon train cars for the classic look
+  toon.js           cel-shading material and vertex-coloured geometry helpers
+  theme.js          picks and remembers the look
   effects.js        sprite particles
   audio.js          synthesised SFX and the music scheduler
   music.js          procedural composer (song sections, chords, melodies)
