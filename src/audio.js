@@ -1,8 +1,11 @@
-// All sound is synthesised with WebAudio at runtime (no audio files).
-// Music is generated procedurally (see music.js) and scheduled against the audio
-// clock, so its tempo is independent of the display frame rate.
+// Sound effects are synthesised with WebAudio at runtime. Music is generated
+// procedurally and scheduled against the audio clock, so its tempo is independent of
+// the display frame rate: the city look uses synthesised instruments (music.js), the
+// classic look plays real recorded instruments (music_street.js, samples.js).
 
 import { Composer } from './music.js';
+import { StreetComposer } from './music_street.js';
+import { CLASSIC } from './theme.js';
 
 const NOTE = (n) => 440 * Math.pow(2, (n - 69) / 12); // MIDI note -> Hz
 
@@ -15,6 +18,72 @@ export class AudioSys {
     this.loops = {};
     this.coinStreak = 0;
     this.lastCoin = 0;
+    this.sampleData = null; // raw bytes, decoded once audio is unlocked
+    this.samples = null;
+    this.decoding = null;
+  }
+
+  setSampleData(data) {
+    this.sampleData = data;
+    if (this.ctx && !this.decoding) this.decoding = this.decodeSamples();
+  }
+
+  async decodeSamples() {
+    const ctx = this.ctx;
+    const decode = (buf) => new Promise((resolve, reject) => ctx.decodeAudioData(buf.slice(0), resolve, reject));
+    const out = {};
+    await Promise.all(Object.entries(this.sampleData).map(async ([name, entry]) => {
+      if (entry instanceof ArrayBuffer) {
+        out[name] = { buffer: await decode(entry) };
+      } else {
+        const notes = await Promise.all(Object.entries(entry).map(async ([n, buf]) => [+n, await decode(buf)]));
+        out[name] = { notes: notes.sort((x, y) => x[0] - y[0]) };
+      }
+    }));
+    this.samples = out;
+    // if the synth fallback started first, hand over to the sampled band
+    if (CLASSIC && this.musicPlaying && !(this.composer instanceof StreetComposer)) {
+      this.stopMusic();
+      this.startMusic();
+    }
+    return out;
+  }
+
+  // Play a recorded sample. Pitched instruments use the nearest sampled note, re-pitched
+  // to `note`; `dur` cuts the note short with a quick release.
+  sample(name, { note = null, when = 0, vol = 0.5, dur = null, dest } = {}) {
+    const s = this.samples && this.samples[name];
+    if (!s || !this.ctx) return false;
+    const ctx = this.ctx;
+    let buffer = s.buffer;
+    let rate = 1;
+    if (s.notes) {
+      // fold the note into the sampled range by octaves so no sample is stretched far
+      const lo = s.notes[0][0] - 3;
+      const hi = s.notes[s.notes.length - 1][0] + 3;
+      while (note > hi) note -= 12;
+      while (note < lo) note += 12;
+      let best = s.notes[0];
+      for (const entry of s.notes) if (Math.abs(entry[0] - note) < Math.abs(best[0] - note)) best = entry;
+      buffer = best[1];
+      rate = Math.pow(2, (note - best[0]) / 12);
+    }
+    const t = ctx.currentTime + Math.max(0, when);
+    const length = buffer.duration / rate;
+    const end = dur ? Math.min(dur, length) : length;
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.playbackRate.value = rate;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(vol, t);
+    if (end < length) {
+      g.gain.setValueAtTime(vol, t + Math.max(0, end - 0.06));
+      g.gain.linearRampToValueAtTime(0.0001, t + end);
+    }
+    src.connect(g).connect(dest || this.sfxBus);
+    src.start(t);
+    src.stop(t + end + 0.02);
+    return true;
   }
 
   unlock() {
@@ -36,6 +105,7 @@ export class AudioSys {
       this.musicBus.gain.value = this.musicOn ? 0.32 : 0;
       this.musicBus.connect(this.comp);
       this.noiseBuf = this.makeNoise();
+      if (this.sampleData && !this.decoding) this.decoding = this.decodeSamples();
     }
     if (this.ctx.state === 'suspended') this.ctx.resume();
   }
@@ -223,19 +293,27 @@ export class AudioSys {
   }
 
   // ---------- music ----------
-  // The procedural composer (music.js) writes an endless, ever-changing song.
+  // The procedural composers write an endless, ever-changing song.
   startMusic() {
     if (!this.ctx || this.musicPlaying) return;
     this.musicPlaying = true;
-    this.spb = 60 / 124 / 4; // seconds per sixteenth at 124 BPM
-    this.composer = new Composer(this, this.spb);
-    this.nextTime = this.ctx.currentTime + 0.08;
-    this.timer = setInterval(() => this.schedule(), 25);
+    const begin = () => {
+      if (!this.musicPlaying || this.timer) return;
+      this.composer = CLASSIC && this.samples ? new StreetComposer(this) : new Composer(this, 60 / 124 / 4);
+      this.spb = this.composer.spb;
+      this.nextTime = this.ctx.currentTime + 0.08;
+      this.timer = setInterval(() => this.schedule(), 25);
+    };
+    // the classic look waits for its instrument samples (they decode in well under a second)
+    if (CLASSIC && this.decoding && !this.samples) this.decoding.then(begin, begin);
+    else begin();
   }
 
   stopMusic() {
     this.musicPlaying = false;
     clearInterval(this.timer);
+    this.timer = null;
+    if (this.composer && this.composer.bus) this.composer.bus.disconnect();
   }
 
   schedule() {

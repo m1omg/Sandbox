@@ -9,7 +9,7 @@
 // on the display frame rate. Visual-only randomness (Math.random) is fine here: the
 // music never affects the simulation.
 
-const NOTE = (n) => 440 * Math.pow(2, (n - 69) / 12);
+export const NOTE = (n) => 440 * Math.pow(2, (n - 69) / 12);
 const SCALE = [0, 2, 3, 5, 7, 8, 10]; // natural minor
 
 // Chord progressions as scale degrees (0 = i, 2 = III, 3 = iv, 4 = v, 5 = VI, 6 = VII).
@@ -37,10 +37,10 @@ const KICKS = {
   none: () => [],
 };
 
-const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-const chance = (p) => Math.random() < p;
+export const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+export const chance = (p) => Math.random() < p;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-function weighted(items) {
+export function weighted(items) {
   let total = 0;
   for (const [, w] of items) total += w;
   let r = Math.random() * total;
@@ -49,7 +49,7 @@ function weighted(items) {
 }
 
 // MIDI note of a scale degree (degrees can be negative or span several octaves).
-function degMidi(key, deg) {
+export function degMidi(key, deg) {
   const oct = Math.floor(deg / 7);
   return key + 12 * oct + SCALE[deg - oct * 7];
 }

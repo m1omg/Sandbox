@@ -9,6 +9,7 @@ const KEYMAP = {
   KeyE: 'board', ShiftLeft: 'board', ShiftRight: 'board',
   Escape: 'pause', KeyP: 'pause',
   Enter: 'confirm',
+  KeyF: 'fps',
 };
 
 export class Input {
