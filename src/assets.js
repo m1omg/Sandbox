@@ -22,7 +22,8 @@ const MODELS = {
   warden: 'assets/models/warden.glb',
 };
 
-export async function loadAssets(renderer, onProgress) {
+// textureKeys: which entries of TEXTURES to load (the classic look needs none of them).
+export async function loadAssets(renderer, onProgress, textureKeys = Object.keys(TEXTURES)) {
   const manager = new THREE.LoadingManager();
   manager.onProgress = (_url, loaded, total) => onProgress && onProgress(loaded / total);
   const texLoader = new THREE.TextureLoader(manager);
@@ -30,7 +31,8 @@ export async function loadAssets(renderer, onProgress) {
   const maxAniso = Math.min(16, renderer.capabilities.getMaxAnisotropy());
 
   const textures = {};
-  const texJobs = Object.entries(TEXTURES).map(async ([key, url]) => {
+  const texJobs = textureKeys.map(async (key) => {
+    const url = TEXTURES[key];
     const tex = await texLoader.loadAsync(url);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = maxAniso;

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { STEP, MAX_FRAME_TIME, HOVERBOARD_COST, UPGRADE_COSTS, MAX_UPGRADE } from './config.js';
 import { loadAssets } from './assets.js';
+import { CLASSIC, switchTheme } from './theme.js';
 import { AudioSys } from './audio.js';
 import { Input } from './input.js';
 import { UI } from './ui.js';
@@ -33,6 +34,7 @@ const audio = new AudioSys();
 audio.musicOn = save.music;
 audio.sfxOn = save.sfx;
 ui.setToggles(save);
+ui.setTheme(CLASSIC);
 const input = new Input(document.getElementById('touch'));
 ui.show('loading');
 
@@ -79,6 +81,7 @@ ui.on('toggleMusic', () => {
   writeSave(save);
   ui.setToggles(save);
 });
+ui.on('toggleTheme', () => switchTheme(CLASSIC ? 'city' : 'classic'));
 ui.on('toggleSfx', () => {
   save.sfx = !save.sfx;
   audio.setSfx(save.sfx);
@@ -120,7 +123,8 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('blur', () => game && game.pause());
 
 try {
-  const assets = await loadAssets(renderer, (p) => ui.setLoading(p));
+  // the classic look is built entirely from coloured geometry, so it needs no textures
+  const assets = await loadAssets(renderer, (p) => ui.setLoading(p), CLASSIC ? [] : undefined);
   game = new Game({ scene, camera, assets, audio, save, ui, input });
   window.__game = game;
   renderer.compile(scene, camera);

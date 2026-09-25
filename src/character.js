@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { CLASSIC } from './theme.js';
+import { toonGradient } from './toon.js';
 
 // Helpers for the rigged GLB characters generated for this game: material cleanup,
 // clip cleanup and procedural poses layered on top of the run animation.
@@ -14,7 +16,9 @@ export function prepareCharacter(root) {
       const old = o.material;
       // The generated GLBs ship with an emissive copy of the base colour, which flattens
       // all shading. Replace with a plain lit material using only the base colour map.
-      o.material = new THREE.MeshStandardMaterial({ map: old.map, roughness: 0.78, metalness: 0 });
+      o.material = CLASSIC
+        ? new THREE.MeshToonMaterial({ map: old.map, gradientMap: toonGradient() })
+        : new THREE.MeshStandardMaterial({ map: old.map, roughness: 0.78, metalness: 0 });
       old.dispose();
       o.frustumCulled = false;
     }
