@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { STEP, MAX_FRAME_TIME, HOVERBOARD_COST, UPGRADE_COSTS, MAX_UPGRADE } from './config.js';
 import { loadAssets } from './assets.js';
 import { CLASSIC, switchTheme } from './theme.js';
+import { loadSampleData } from './samples.js';
 import { AudioSys } from './audio.js';
 import { Input } from './input.js';
 import { UI } from './ui.js';
@@ -82,6 +83,12 @@ ui.on('toggleMusic', () => {
   ui.setToggles(save);
 });
 ui.on('toggleTheme', () => switchTheme(CLASSIC ? 'city' : 'classic'));
+function toggleFps() {
+  save.showFps = !save.showFps;
+  writeSave(save);
+  ui.setToggles(save);
+}
+ui.on('toggleFps', toggleFps);
 ui.on('toggleSfx', () => {
   save.sfx = !save.sfx;
   audio.setSfx(save.sfx);
@@ -107,7 +114,9 @@ ui.on('buy', (item) => {
 // Menu / pause shortcuts are handled immediately; gameplay actions stay queued for the simulation.
 input.onAction((a) => {
   if (!game) return;
-  if (a === 'pause') {
+  if (a === 'fps') {
+    toggleFps();
+  } else if (a === 'pause') {
     if (game.state === 'playing') game.pause();
     else if (game.state === 'paused') game.resume();
   } else if ((a === 'confirm' || a === 'up') && ui.current === 'menu') {
@@ -123,8 +132,18 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('blur', () => game && game.pause());
 
 try {
-  // the classic look is built entirely from coloured geometry, so it needs no textures
-  const assets = await loadAssets(renderer, (p) => ui.setLoading(p), CLASSIC ? [] : undefined);
+  // The classic look is built entirely from coloured geometry, so it needs no textures,
+  // but its music uses recorded instrument samples. If those fail to load, the game still
+  // runs and falls back to the synthesised soundtrack.
+  const progress = [0, CLASSIC ? 0 : 1];
+  const report = () => ui.setLoading((progress[0] + progress[1]) / 2);
+  const [assets, sampleData] = await Promise.all([
+    loadAssets(renderer, (p) => { progress[0] = p; report(); }, CLASSIC ? [] : undefined),
+    CLASSIC
+      ? loadSampleData((p) => { progress[1] = p; report(); }).catch((err) => { console.warn(err); return null; })
+      : null,
+  ]);
+  if (sampleData) audio.setSampleData(sampleData);
   game = new Game({ scene, camera, assets, audio, save, ui, input });
   window.__game = game;
   renderer.compile(scene, camera);
@@ -139,10 +158,24 @@ try {
 // therefore the same on 30 Hz, 60 Hz, 144 Hz or any other display.
 let last = performance.now();
 let acc = 0;
+// FPS counter: frames actually presented per second, averaged over half a second.
+let fpsFrames = 0;
+let fpsTime = 0;
+
 function frame(now) {
   requestAnimationFrame(frame);
-  let dt = (now - last) / 1000;
+  const raw = now - last;
+  let dt = raw / 1000;
   last = now;
+  if (save.showFps && raw > 0 && raw < 1000) {
+    fpsFrames++;
+    fpsTime += raw;
+    if (fpsTime >= 500) {
+      ui.updateFps((fpsFrames * 1000) / fpsTime, fpsTime / fpsFrames);
+      fpsFrames = 0;
+      fpsTime = 0;
+    }
+  }
   if (!(dt > 0)) dt = 0;
   if (dt > MAX_FRAME_TIME) dt = MAX_FRAME_TIME;
   if (!game) return;

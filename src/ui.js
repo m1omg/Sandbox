@@ -20,7 +20,7 @@ export class UI {
     this.el = {
       hud: $('hud'), score: $('score'), mult: $('mult'), coins: $('coins'),
       powerups: $('powerups'), boardBtn: $('btn-board'), boardCount: $('board-count'), boardBar: $('board-bar').firstElementChild,
-      toast: $('toast'), countdown: $('countdown'), loadbar: $('loadbar'), loadMsg: $('load-msg'),
+      toast: $('toast'), countdown: $('countdown'), loadbar: $('loadbar'), loadMsg: $('load-msg'), fps: $('fps'),
     };
     this.puEls = {};
     for (const type of POWERUP_TYPES) {
@@ -43,6 +43,7 @@ export class UI {
     on('btn-music', 'toggleMusic');
     on('btn-sfx', 'toggleSfx');
     on('btn-theme', 'toggleTheme');
+    on('btn-fps', 'toggleFps');
     on('btn-pause', 'pause');
     on('btn-resume', 'resume');
     on('btn-restart', 'restart');
@@ -151,7 +152,16 @@ export class UI {
     document.body.classList.toggle('classic', classic);
   }
 
+  updateFps(fps, ms) {
+    this.el.fps.textContent = `${Math.round(fps)} FPS · ${ms.toFixed(1)} ms`;
+  }
+
   setToggles(save) {
+    const f = $('btn-fps');
+    f.textContent = `FPS: ${save.showFps ? 'On' : 'Off'}`;
+    f.setAttribute('aria-pressed', String(save.showFps));
+    this.el.fps.classList.toggle('hidden', !save.showFps);
+    if (save.showFps && !this.el.fps.textContent) this.el.fps.textContent = '… FPS';
     const m = $('btn-music');
     const s = $('btn-sfx');
     m.textContent = `Music: ${save.music ? 'On' : 'Off'}`;

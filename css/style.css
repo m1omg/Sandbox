@@ -455,3 +455,18 @@ kbd {
   .btn.big { font-size: 24px; padding: 10px 28px; }
   .stat .value { font-size: 20px; }
 }
+
+/* FPS counter (toggle with F or the title-screen chip); sits above every screen */
+.fps {
+  position: absolute;
+  left: max(12px, env(safe-area-inset-left));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 50;
+  padding: 3px 9px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #9dff9d;
+  font: 600 13px/1.4 ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  pointer-events: none;
+  white-space: nowrap;
+}

@@ -11,6 +11,7 @@ const DEFAULTS = {
   upgrades: { jetpack: 0, sneakers: 0, magnet: 0, multiplier: 0 },
   music: true,
   sfx: true,
+  showFps: false,
 };
 
 function merge(base, extra) {

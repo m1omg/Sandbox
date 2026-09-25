@@ -18,6 +18,7 @@
   <div id="app">
     <canvas id="game" aria-label="Rail Rascals game view"></canvas>
     <div id="touch" aria-hidden="true"></div>
+    <div id="fps" class="fps hidden" aria-hidden="true"></div>
 
     <!-- In-game HUD -->
     <div id="hud" class="hidden">
@@ -58,6 +59,7 @@
           <button id="btn-music" class="chip" aria-pressed="true">Music: On</button>
           <button id="btn-sfx" class="chip" aria-pressed="true">Sound: On</button>
           <button id="btn-theme" class="chip">Look: City</button>
+          <button id="btn-fps" class="chip" aria-pressed="false">FPS: Off</button>
         </div>
         <p class="hint">Press <kbd>Space</kbd> or tap Play to start</p>
       </div>
@@ -117,6 +119,7 @@
               <li><kbd>↓</kbd> <kbd>S</kbd> — roll (drops you fast in mid-air)</li>
               <li><kbd>E</kbd> or <kbd>Shift</kbd> — hoverboard</li>
               <li><kbd>P</kbd> or <kbd>Esc</kbd> — pause</li>
+              <li><kbd>F</kbd> — show or hide the FPS counter</li>
             </ul>
           </div>
           <div>
