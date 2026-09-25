@@ -37,7 +37,7 @@ export class Game {
     this.obstacles = new Obstacles(scene, assets);
     this.pickups = new Pickups(scene);
     this.generator = new Generator(this.obstacles, this.pickups);
-    this.player = new Player(scene, assets.models.kit);
+    this.player = new Player(scene, CLASSIC ? assets.models.remy : assets.models.kit);
     this.chaser = new Chaser(scene, assets.models.warden);
     this.effects = new Effects(scene);
     this.groundFn = (x, s, y) => this.obstacles.groundAt(x, s, y);

@@ -133,12 +133,17 @@ window.addEventListener('blur', () => game && game.pause());
 
 try {
   // The classic look is built entirely from coloured geometry, so it needs no textures,
-  // but its music uses recorded instrument samples. If those fail to load, the game still
+  // and it has its own runner, Remy, instead of Kit. Its music uses recorded instrument samples. If those fail to load, the game still
   // runs and falls back to the synthesised soundtrack.
   const progress = [0, CLASSIC ? 0 : 1];
   const report = () => ui.setLoading((progress[0] + progress[1]) / 2);
   const [assets, sampleData] = await Promise.all([
-    loadAssets(renderer, (p) => { progress[0] = p; report(); }, CLASSIC ? [] : undefined),
+    loadAssets(
+      renderer,
+      (p) => { progress[0] = p; report(); },
+      CLASSIC ? [] : undefined,
+      [CLASSIC ? 'remy' : 'kit', 'warden'],
+    ),
     CLASSIC
       ? loadSampleData((p) => { progress[1] = p; report(); }).catch((err) => { console.warn(err); return null; })
       : null,

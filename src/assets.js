@@ -19,11 +19,13 @@ const TEXTURES = {
 
 const MODELS = {
   kit: 'assets/models/kit.glb',
+  remy: 'assets/models/remy.glb',
   warden: 'assets/models/warden.glb',
 };
 
 // textureKeys: which entries of TEXTURES to load (the classic look needs none of them).
-export async function loadAssets(renderer, onProgress, textureKeys = Object.keys(TEXTURES)) {
+// modelKeys: which characters to load (each look has its own runner).
+export async function loadAssets(renderer, onProgress, textureKeys = Object.keys(TEXTURES), modelKeys = Object.keys(MODELS)) {
   const manager = new THREE.LoadingManager();
   manager.onProgress = (_url, loaded, total) => onProgress && onProgress(loaded / total);
   const texLoader = new THREE.TextureLoader(manager);
@@ -40,8 +42,8 @@ export async function loadAssets(renderer, onProgress, textureKeys = Object.keys
   });
 
   const models = {};
-  const modelJobs = Object.entries(MODELS).map(async ([key, url]) => {
-    models[key] = await gltfLoader.loadAsync(url);
+  const modelJobs = modelKeys.map(async (key) => {
+    models[key] = await gltfLoader.loadAsync(MODELS[key]);
   });
 
   await Promise.all([...texJobs, ...modelJobs]);

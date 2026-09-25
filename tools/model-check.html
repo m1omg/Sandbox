@@ -18,9 +18,9 @@ const params = new URLSearchParams(location.search);
 const t = parseFloat(params.get('t')||'0.2');
 const rotY = parseFloat(params.get('rot')||'0');
 const fixMat = params.get('fix') === '1';
-for (const [i,name] of ['kit','warden'].entries()) {
+for (const [i,name] of ['kit','remy','warden'].entries()) {
   const g = await loader.loadAsync(`../assets/models/${name}.glb`);
-  const root = g.scene; root.position.x = i===0? -1.2: 1.2; root.rotation.y = rotY;
+  const root = g.scene; root.position.x = (i - 1) * 1.2; root.rotation.y = rotY;
   scene.add(root);
   const bones=[]; root.traverse(o=>{ if(o.isBone) bones.push(o.name); if(o.isMesh && fixMat){ const m=o.material; o.material=new THREE.MeshStandardMaterial({map:m.map, roughness:0.85, metalness:0}); } if(o.isMesh) info[name+'_mat']={type:o.material.type, emissive:o.material.emissive?.getHexString(), emap:!!o.material.emissiveMap}; });
   const box = new THREE.Box3().setFromObject(root);
