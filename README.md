@@ -1,6 +1,6 @@
 # Rail Rascals
 
-A 3D endless runner for the browser. Sprint down a sunny rail yard as **Kit**, a street artist on the run from the grumpy **rail-yard warden**. Dodge trains, jump hurdles, roll under gates, run up ramps onto train roofs and grab coins and power-ups.
+A 3D endless runner for the browser. Sprint down a sunny rail yard as **Kit** (city look) or **Remy** (classic look), street kids on the run from the grumpy **rail-yard warden**. Dodge trains, jump hurdles, roll under gates, run up ramps onto train roofs and grab coins and power-ups.
 
 All characters, names, art, sound and music in this project are original.
 
@@ -9,7 +9,7 @@ All characters, names, art, sound and music in this project are original.
 ## Two looks
 
 - **City** (default): textured trains, graffiti walls and a row of apartment blocks along the line.
-- **Classic**: a bright, cel-shaded rail line: sandy track bed with chunky sleepers, overhead-line gantries and sagging wires, red arched retaining walls topped with hedges, avenues of round trees, rows of gabled houses behind picket fences, red-and-white signal posts, and toon trains (four passenger liveries plus a ribbed freight wagon). The camera sits higher and looks down more steeply. Everything in this look is built from coloured geometry, so it loads no textures at all.
+- **Classic**: a bright, cel-shaded rail line: sandy track bed with chunky sleepers, overhead-line gantries and sagging wires, red arched retaining walls topped with hedges, avenues of round trees, rows of gabled houses behind picket fences, red-and-white signal posts, and toon trains (four passenger liveries plus a ribbed freight wagon). The camera sits higher and looks down more steeply. The runner here is **Remy**: curly high-top, lime sweatband, mint track jacket, baggy jeans, yellow high-tops and an orange backpack with a paint-splat patch. All characters get a dark cartoon outline in this look. The scenery is built from coloured geometry, so it loads no textures at all.
 
 Switch with the **Look** button on the title screen (the choice is remembered), or with `?theme=classic` / `?theme=city` in the URL. Gameplay, progress and the shop are shared between the two.
 
@@ -64,7 +64,7 @@ src/
   game.js           game state machine, collisions, scoring, camera
   player.js         runner physics, poses, hoverboard and jetpack visuals
   chaser.js         the warden
-  character.js      GLB material and clip cleanup, procedural pose rig
+  character.js      GLB material and clip cleanup, cartoon outline, procedural pose rig
   generator.js      procedural level generator
   obstacles.js      trains, ramps, hurdles, gates, ground and collider queries
   pickups.js        coins (instanced) and power-up items
@@ -84,7 +84,7 @@ src/
   storage.js        save data
   util.js           helpers and seeded RNG
 assets/
-  models/           kit.glb, warden.glb (rigged, with run animation)
+  models/           kit.glb, remy.glb, warden.glb (rigged, with run animation)
   textures/         train liveries, graffiti wall, gravel, grass, building facades, skyline, logo
   concept/          character concept art the 3D models were built from
   audio/            instrument samples for the classic look (mono MP3)
@@ -97,7 +97,7 @@ vendor/three/       three.js r186 (MIT)
 Assets were generated for this project with Higgsfield:
 
 - **Concept art, textures and logo:** GPT Image 2.5, including the grass and the three apartment facades. The red and green train liveries are hue-shifted copies of the blue one.
-- **3D characters:** Meshy image-to-3D from the concept art, auto-rigged with a humanoid skeleton and a run cycle. Textures were downscaled to 1024 px JPEG with [glTF-Transform](https://gltf-transform.dev/). Jump, roll, hoverboard, jetpack and crash poses are layered on procedurally at runtime.
+- **3D characters:** Kit and the warden are Meshy image-to-3D models built from their concept art. Remy was drawn as a four-view turnaround sheet; his model is Tripo H3.1 image-to-3D from the front view. The backpack's paint-splat patch was then projected onto the texture from the back view with a small script (rasterise the mesh in UV space, find the texels that face backwards and are visible from behind, and copy colours from the drawing). All three are auto-rigged by Meshy with a humanoid skeleton and a run cycle. Textures are 1024 px JPEG. Jump, roll, hoverboard, jetpack and crash poses are layered on procedurally at runtime.
 - **Everything else** (tracks, trains, hurdles, coins, power-up items, particles) is built procedurally in code.
 
 **Instrument samples** (`assets/audio/`, each trimmed, mixed to mono and normalised):

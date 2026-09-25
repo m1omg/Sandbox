@@ -11,6 +11,7 @@ const _m = new THREE.Quaternion();
 const AXES = { x: new THREE.Vector3(1, 0, 0), y: new THREE.Vector3(0, 1, 0), z: new THREE.Vector3(0, 0, 1) };
 
 export function prepareCharacter(root) {
+  const skinned = [];
   root.traverse((o) => {
     if (o.isMesh) {
       const old = o.material;
@@ -21,8 +22,47 @@ export function prepareCharacter(root) {
         : new THREE.MeshStandardMaterial({ map: old.map, roughness: 0.78, metalness: 0 });
       old.dispose();
       o.frustumCulled = false;
+      if (o.isSkinnedMesh) skinned.push(o);
     }
   });
+  if (CLASSIC) for (const m of skinned) addOutline(m);
+}
+
+// Cartoon ink line for the classic look: a slightly inflated copy of the mesh that only draws
+// its back faces, in a dark colour. It shares the character's skeleton, so it follows every
+// animation and pose, and it is a child of the model, so it hides and shows with it.
+let outlineMat = null;
+function addOutline(mesh, width = 0.016) {
+  if (!outlineMat) {
+    outlineMat = new THREE.MeshBasicMaterial({ color: 0x241a33, side: THREE.BackSide });
+    outlineMat.onBeforeCompile = (shader) => {
+      shader.uniforms.outlineWidth = { value: width };
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nuniform float outlineWidth;')
+        .replace('#include <begin_vertex>', 'vec3 transformed = position + normal * outlineWidth;');
+    };
+  }
+  const line = new THREE.SkinnedMesh(mesh.geometry, outlineMat);
+  line.bind(mesh.skeleton, mesh.bindMatrix);
+  line.position.copy(mesh.position);
+  line.quaternion.copy(mesh.quaternion);
+  line.scale.copy(mesh.scale);
+  line.frustumCulled = false;
+  mesh.parent.add(line);
+}
+
+// How far the character's back sticks out behind the torso (model space, facing +z), e.g. a backpack.
+export function backDepth(root) {
+  let depth = 0;
+  root.traverse((o) => {
+    if (!o.isMesh || o.material.side === THREE.BackSide) return;
+    const pos = o.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const y = pos.getY(i);
+      if (y > 0.85 && y < 1.35) depth = Math.max(depth, -pos.getZ(i));
+    }
+  });
+  return depth;
 }
 
 // Keep the vertical bounce of the hips but remove horizontal drift so the character

@@ -4,7 +4,7 @@ import {
   JUMP_BUFFER, COYOTE_TIME, PLAYER_HALF_W, PLAYER_HALF_D, PLAYER_H, PLAYER_ROLL_H, JETPACK_ALT,
   SPEED_START,
 } from './config.js';
-import { prepareCharacter, inPlaceClip, PoseRig } from './character.js';
+import { prepareCharacter, inPlaceClip, PoseRig, backDepth } from './character.js';
 import { canvasTexture, radialTexture } from './assets.js';
 import { makeBlobShadow } from './world.js';
 import { damp, lerp, smoothstep } from './util.js';
@@ -131,7 +131,8 @@ export class Player {
     this.pivot.add(this.board);
 
     this.jetpack = jetpackMesh();
-    this.jetpack.position.set(0, 1.05, 0.24);
+    // strap the jetpack on just behind the runner's back (or backpack)
+    this.jetpack.position.set(0, 1.05, Math.max(0.24, backDepth(this.model) + 0.07));
     this.jetpack.visible = false;
     this.holder.add(this.jetpack);
 
