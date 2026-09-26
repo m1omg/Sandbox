@@ -11,7 +11,7 @@ All characters, names, art, sound and music in this project are original.
 - **City** (default): textured trains, graffiti walls and a row of apartment blocks along the line.
 - **Classic**: a bright, cel-shaded rail line: sandy track bed with chunky sleepers, overhead-line gantries and sagging wires, red arched retaining walls topped with hedges, avenues of round trees, rows of gabled houses behind picket fences, red-and-white signal posts, and toon trains (four passenger liveries plus a ribbed freight wagon). The camera sits higher and looks down more steeply. The runner here is **Remy**: curly high-top, lime sweatband, mint track jacket, baggy jeans, yellow high-tops and an orange backpack with a paint-splat patch. All characters get a dark cartoon outline in this look. The scenery is built from coloured geometry, so it loads no textures at all.
 
-Switch with the **Look** button on the title screen (the choice is remembered), or with `?theme=classic` / `?theme=city` in the URL. Gameplay, progress and the shop are shared between the two.
+Switch with the **Look** button on the title screen (the choice is remembered). `?theme=classic` / `?theme=city` in the URL picks a look for that visit only. Gameplay, progress and the shop are shared between the two.
 
 ## Playing
 
