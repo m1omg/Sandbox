@@ -1,6 +1,6 @@
 # Rail Rascals
 
-A 3D endless runner for the browser. Sprint down a sunny rail yard as one of five street kids (**Kit**, **Remy**, **Juno**, **Ozzy** or **Nia**) on the run from the grumpy **rail-yard warden**. Dodge trains, jump hurdles, roll under gates, run up ramps onto train roofs and grab coins and power-ups.
+A 3D endless runner for the browser. Sprint down a sunny rail yard as one of six street kids (**Kit**, **Jim**, **Remy**, **Juno**, **Ozzy** or **Nia**) on the run from the grumpy **rail-yard warden**. Dodge trains, jump hurdles, roll under gates, run up ramps onto train roofs and grab coins and power-ups.
 
 All characters, names, art, sound and music in this project are original.
 
@@ -9,7 +9,7 @@ All characters, names, art, sound and music in this project are original.
 ## Two looks
 
 - **City** (default): textured trains, graffiti walls and a row of apartment blocks along the line.
-- **Classic**: a bright, cel-shaded rail line: sandy track bed with chunky sleepers, overhead-line gantries and sagging wires, red arched retaining walls topped with hedges, avenues of round trees, rows of gabled houses behind picket fences, red-and-white signal posts, and toon trains (four passenger liveries plus a ribbed freight wagon). The camera sits higher and looks down more steeply. The runner here is **Remy**: curly high-top, lime sweatband, mint track jacket, baggy jeans, yellow high-tops and an orange backpack with a paint-splat patch. All characters get a dark cartoon outline in this look. The scenery is built from coloured geometry, so it loads no textures at all.
+- **Classic**: a bright, cel-shaded rail line: sandy track bed with chunky sleepers, overhead-line gantries and sagging wires, red arched retaining walls topped with hedges, avenues of round trees, rows of gabled houses behind picket fences, red-and-white signal posts, and toon trains (four passenger liveries plus a ribbed freight wagon). The camera sits higher and looks down more steeply. The default runner here is **Jim**, a cheeky graffiti kid: backwards cap, grey hoodie under a mustard vest with his tag sprayed on the back, rolled-up jeans and a spray can on his belt. All characters get a dark cartoon outline in this look. The scenery is built from coloured geometry, so it loads no textures at all.
 
 Switch with the **Look** button on the title screen (the choice is remembered). `?theme=classic` / `?theme=city` in the URL picks a look for that visit only. Gameplay, progress and the shop are shared between the two.
 
@@ -42,7 +42,7 @@ Any static host works too. The live copy is served by GitHub Pages straight from
 - **Stumbles:** clip an obstacle from the side and you bounce back while the warden closes in. Stumble again while he's close and you're caught.
 - **Power-ups:** Jetpack (fly above everything along a sky coin trail), Spring Sneakers (super jumps, reach roofs from the ground), Coin Magnet, 2x Score.
 - **Hoverboards** absorb one crash and last 30 s. You start with 3; buy more in the shop.
-- **Runners:** Kit (the city look's default) and Remy (the classic look's) are free; Juno (2,000 coins), Ozzy (3,500) and Nia (5,000) are unlocked in the shop. Your runner is used in both looks. Only the chosen runner's model is downloaded; others load when you pick them.
+- **Runners:** Kit (the city look's default), Jim (the classic look's) and Remy are free; Juno (2,000 coins), Ozzy (3,500) and Nia (5,000) are unlocked in the shop. Your runner is used in both looks. Only the chosen runner's model is downloaded; others load when you pick them.
 - **Shop:** spend coins on runners, to extend power-up durations (5 levels each) and to buy hoverboards. Upgrades are permanent and apply automatically whenever you pick up that power-up. Bought hoverboards are used during a run with E / Shift, a double-tap, or the board button in the bottom-right corner. Progress, best score and settings are saved in `localStorage`.
 - **Fair procedural levels:** the generator guarantees at most two lanes are ever walled off by trains and clears the full approach path of every oncoming train.
 - **Music with real instruments (classic look):** an original, swung street/hip-hop groove played on recorded samples: drum kit, congas, fingered electric bass, electric piano, brass stabs, steel drums, marimba and pizzicato strings. It uses the same ever-changing song structure as the city soundtrack. The samples total about 260 KB and load only in the classic look. If they can't load, the game falls back to the synthesised soundtrack.
@@ -85,13 +85,13 @@ src/
   storage.js        save data
   util.js           helpers and seeded RNG
 assets/
-  models/           kit, remy, juno, ozzy, nia, warden (.glb, rigged, with run animation)
+  models/           kit, jim, remy, juno, ozzy, nia, warden (.glb, rigged, with run animation)
   portraits/        runner portraits for the shop
   textures/         train liveries, graffiti wall, gravel, grass, building facades, skyline, logo
   concept/          character concept art the 3D models were built from
   audio/            instrument samples for the classic look (mono MP3)
 tools/              dev pages for checking models and poses
-  autorig/          the auto-rigger used for Juno, Ozzy and Nia (Python, see its README)
+  autorig/          the auto-rigger used for Jim, Juno, Ozzy and Nia (Python, see its README)
 vendor/three/       three.js r186 (MIT)
 ```
 
@@ -101,7 +101,7 @@ Assets were generated for this project with Higgsfield and Krea:
 
 - **Concept art, textures and logo:** GPT Image 2.5, including the grass and the three apartment facades. The red and green train liveries are hue-shifted copies of the blue one.
 - **3D characters:** Kit and the warden are Meshy image-to-3D models built from their concept art. Remy was drawn as a four-view turnaround sheet; his model is Tripo H3.1 image-to-3D from the front view. The backpack's paint-splat patch was then projected onto the texture from the back view with a small script (rasterise the mesh in UV space, find the texels that face backwards and are visible from behind, and copy colours from the drawing). These three are auto-rigged by Meshy with a humanoid skeleton and a run cycle.
-- **Juno, Ozzy and Nia** were made with Krea: a front-and-back character sheet from Nano Banana (with Remy's sheet as a style and pose reference), then a textured mesh from Rodin V2.5 Fast using both views. They were rigged by this project's own auto-rigger (`tools/autorig/`): it finds the joints from the mesh's silhouette, fits Meshy's skeleton to them, computes skin weights and retargets the same run cycle, so the game treats all five runners the same way.
+- **Jim, Juno, Ozzy and Nia** were made with Krea: a front-and-back character sheet from Nano Banana (with Remy's sheet as a style and pose reference), then a textured mesh from Rodin V2.5 Fast using both views. They were rigged by this project's own auto-rigger (`tools/autorig/`): it finds the joints from the mesh's silhouette, fits Meshy's skeleton to them, computes skin weights and retargets the same run cycle, so the game treats all six runners the same way.
 - Character textures are 1024 px JPEG. Jump, roll, hoverboard, jetpack and crash poses are layered on procedurally at runtime.
 - **Everything else** (tracks, trains, hurdles, coins, power-up items, particles) is built procedurally in code.
 

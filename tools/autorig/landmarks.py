@@ -77,36 +77,43 @@ def detect(P, I):
             yy += CELL
         legs[side] = np.array(pts)
     L['legs'] = legs
-    # torso run and arms: scan from the crotch upward
+    # arms: find each armpit (the highest row where the arm is separate from the body), then
+    # trace the arm down to the finger tips, always following the blob that continues it
+    # (a spray can on the belt is a separate blob between arm and body)
     arms = {}
     for side, sgn in (('L', 1), ('R', -1)):
-        pts = []; armpit = None
+        def outer_runs(yy):
+            rs = sil.runs(yy); mid = run_at(rs, 0.0)
+            if mid is not None:
+                return [q for q in rs if (sgn > 0 and q[0] > mid[1]) or (sgn < 0 and q[1] < mid[0])], mid
+            return [q for q in rs if sgn * (q[0] + q[1]) > 0], None
+        armpit = None
         yy = L['crotch'] + 0.02
         while yy < 0.9 * top:
-            rs = sil.runs(yy); mid = run_at(rs, 0.0)
-            if mid is None: yy += CELL; continue
-            outer = [q for q in rs if (sgn > 0 and q[0] > mid[1]) or (sgn < 0 and q[1] < mid[0])]
-            if outer:
-                q = min(outer, key=lambda q: abs(q[0] - mid[1]) if sgn > 0 else abs(q[1] - mid[0]))
-                pts.append((yy, 0.5 * (q[0] + q[1]), q[0], q[1], mid[1] if sgn > 0 else mid[0]))
+            outer, mid = outer_runs(yy)
+            if mid is not None and outer:
                 armpit = (yy, mid[1] if sgn > 0 else mid[0])
             elif armpit is not None and yy - armpit[0] > 0.03:
                 break
             yy += CELL
-        # continue the arm down past the crotch to the finger tips
-        yy = L['crotch'] + 0.02
-        cx = pts[0][1] if pts else sgn * 0.3
-        low = []
-        while yy > 0.05:
-            rs = [q for q in sil.runs(yy) if sgn * (q[0] + q[1]) > 0]
-            leg = legs[side]
-            legx = np.interp(yy, leg[:, 0], leg[:, 1]) if len(leg) and yy <= leg[-1, 0] else None
-            cand = [q for q in rs if legx is None or abs(0.5 * (q[0] + q[1]) - legx) > 0.03]
-            q = nearest_run(cand, cx)
-            if q is None or abs(0.5 * (q[0] + q[1]) - cx) > 0.08: break
-            cx = 0.5 * (q[0] + q[1]); low.append((yy, cx, q[0], q[1], np.nan)); yy -= CELL
-        allpts = sorted(low + pts)
-        arms[side] = {'pts': np.array(allpts), 'armpit': armpit}
+        pts = []; cx = None; yy = armpit[0]; last = armpit[0]
+        leg = legs[side]
+        while yy > 0.02 and last - yy < 0.05:  # tolerate short stretches where the arm touches the body
+            outer, mid = outer_runs(yy)
+            if mid is None and len(leg) and yy <= leg[-1, 0]:  # below the crotch: skip the leg
+                legx = np.interp(yy, leg[:, 0], leg[:, 1])
+                outer = [q for q in outer if abs(0.5 * (q[0] + q[1]) - legx) > 0.03]
+            q = None
+            if outer and cx is None:  # at the armpit: the run next to the body
+                q = min(outer, key=lambda q: abs(q[0] - armpit[1]) if sgn > 0 else abs(q[1] - armpit[1]))
+            elif outer:
+                q = nearest_run(outer, cx)
+                if abs(0.5 * (q[0] + q[1]) - cx) > 0.06: q = None
+            if q is not None:
+                cx = 0.5 * (q[0] + q[1]); last = yy
+                pts.append((yy, cx, q[0], q[1], np.nan))
+            yy -= CELL
+        arms[side] = {'pts': np.array(sorted(pts)), 'armpit': armpit}
     L['arms'] = arms
     # neck: narrowest middle run between the armpits and the top of the head
     ap = max(arms['L']['armpit'][0], arms['R']['armpit'][0])
