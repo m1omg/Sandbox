@@ -20,8 +20,16 @@ const TEXTURES = {
 const MODELS = {
   kit: 'assets/models/kit.glb',
   remy: 'assets/models/remy.glb',
+  juno: 'assets/models/juno.glb',
+  ozzy: 'assets/models/ozzy.glb',
+  nia: 'assets/models/nia.glb',
   warden: 'assets/models/warden.glb',
 };
+
+// Load one character model on demand (switching runners in the shop).
+export function loadModel(key) {
+  return new GLTFLoader().loadAsync(MODELS[key]);
+}
 
 // textureKeys: which entries of TEXTURES to load (the classic look needs none of them).
 // modelKeys: which characters to load (each look has its own runner).

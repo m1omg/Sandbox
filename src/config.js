@@ -64,6 +64,16 @@ export const POWERUP_TYPES = Object.keys(POWERUPS);
 export const UPGRADE_COSTS = [300, 750, 1500, 3000, 6000];
 export const MAX_UPGRADE = UPGRADE_COSTS.length;
 
+// Playable runners. Kit and Remy are free (the default runners of the city and classic
+// looks); the others are unlocked in the shop.
+export const RUNNERS = [
+  { id: 'kit', name: 'Kit', cost: 0, blurb: 'Street artist with a purple bob and a yellow windbreaker.' },
+  { id: 'remy', name: 'Remy', cost: 0, blurb: 'Curly high-top, lime sweatband, never without his backpack.' },
+  { id: 'juno', name: 'Juno', cost: 2000, blurb: 'Skater with pink space buns and a star on her varsity jacket.' },
+  { id: 'ozzy', name: 'Ozzy', cost: 3500, blurb: 'Ginger quiff, brass goggles and an orange puffer vest.' },
+  { id: 'nia', name: 'Nia', cost: 5000, blurb: 'Street dancer with waist-length braids and a coral puffer.' },
+];
+
 export function powerupDuration(type, level) {
   const p = POWERUPS[type];
   return p.base + p.per * level;

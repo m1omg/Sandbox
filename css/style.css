@@ -267,6 +267,12 @@ kbd {
   overflow-y: auto;
 }
 
+/* Centre with auto margins rather than justify-content, so a panel taller than the screen
+   (the shop on a phone) scrolls from its top instead of being clipped above it. */
+.screen:not(.menu) { justify-content: flex-start; }
+.screen:not(.menu) > :first-child { margin-top: auto; }
+.screen:not(.menu) > :last-child { margin-bottom: auto; }
+
 .screen.menu {
   background: linear-gradient(180deg, rgba(15, 25, 50, 0.1) 0%, rgba(15, 25, 50, 0.1) 45%, rgba(15, 25, 50, 0.55) 100%);
   justify-content: space-between;
@@ -439,6 +445,33 @@ kbd {
 .pips i.on { background: var(--yellow); }
 
 .shop-item .btn { min-width: 110px; padding: 8px 12px; font-size: 17px; }
+
+.shop-head { text-align: left; margin-top: 4px; }
+.shop-head h3 { margin: 0; color: var(--yellow); }
+.shop-head .shop-note { margin: 2px 0 0; }
+
+.runner-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
+  gap: 10px;
+}
+
+.runner-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid transparent;
+}
+
+.runner-card.active { border-color: var(--yellow); background: rgba(255, 212, 0, 0.12); }
+.runner-card img { width: 84px; height: 84px; border-radius: 50%; background: #fff; object-fit: cover; }
+.runner-card .name { font-weight: 700; font-size: 18px; }
+.runner-card .desc { font-size: 12.5px; opacity: 0.75; line-height: 1.25; text-align: center; flex: 1; }
+.runner-card .btn { width: 100%; padding: 7px 8px; font-size: 16px; }
 
 .help-grid {
   display: grid;
