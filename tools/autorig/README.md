@@ -1,6 +1,6 @@
 # autorig
 
-The auto-rigger used for Juno, Ozzy and Nia. It takes a textured, unrigged character mesh in
+The auto-rigger used for Jim, Juno, Ozzy and Nia. It takes a textured, unrigged character mesh in
 an A-pose and produces a GLB with the same skeleton, bone names and run cycle as the
 Meshy-rigged characters, so the game's pose layers (jump, roll, hoverboard, jetpack, crash) work
 on it unchanged.

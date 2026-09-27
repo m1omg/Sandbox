@@ -42,9 +42,9 @@ ui.show('loading');
 let game = null;
 
 // ---- runners ----
-// Kit and Remy are free; the others are bought in the shop. An empty choice means the
+// Kit, Jim and Remy are free; the others are bought in the shop. An empty choice means the
 // current look's default runner.
-const DEFAULT_RUNNER = CLASSIC ? 'remy' : 'kit';
+const DEFAULT_RUNNER = CLASSIC ? 'jim' : 'kit';
 const runnerInfo = (id) => RUNNERS.find((r) => r.id === id);
 const ownsRunner = (id) => !!runnerInfo(id) && (runnerInfo(id).cost === 0 || save.owned.includes(id));
 function activeRunner() {

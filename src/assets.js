@@ -19,6 +19,7 @@ const TEXTURES = {
 
 const MODELS = {
   kit: 'assets/models/kit.glb',
+  jim: 'assets/models/jim.glb',
   remy: 'assets/models/remy.glb',
   juno: 'assets/models/juno.glb',
   ozzy: 'assets/models/ozzy.glb',
