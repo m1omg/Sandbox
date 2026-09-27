@@ -30,6 +30,8 @@ The input should face +z. It is placed on the floor, centred and scaled to 1.6 m
    - the torso bones are kept off the face and chin;
    - a bone's fragments that are cut off from its main patch go to the surface they are
      attached to;
+   - everything above the narrowest point of the neck (chin, face, hair, a cap) follows the
+     head rigidly, with a short blend into the neck below it;
    - hair hanging behind the neck blends from the head to the upper back.
 
    The weights are then smoothed over the mesh (welded across UV seams) and limited to four

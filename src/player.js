@@ -361,7 +361,9 @@ export class Player {
     }
 
     this.mixer.timeScale = this.dead ? 0 : 0.95 + Math.max(0, speed - SPEED_START) / 34;
+    this.rig.restore();
     this.mixer.update(dt);
+    this.rig.capture();
     this.rig.apply();
     // The run cycle looks down at the feet; lift the head so the runner looks ahead (and the
     // face shows on the title screen), except while tucked or crashing.
