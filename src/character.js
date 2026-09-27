@@ -144,6 +144,13 @@ export class PoseRig {
     this.weights[name] = 0;
   }
 
+  // Extra rotation on top of the current pose (the mixer rewrites bones every frame, so this
+  // doesn't accumulate).
+  tilt(name, axis, angle) {
+    const b = this.bones[name];
+    if (b) rotateInModelSpace(b, this.root, AXES[axis], angle);
+  }
+
   // Call after the mixer has written the animated pose for this frame.
   apply() {
     for (const [name, pose] of Object.entries(this.poses)) {

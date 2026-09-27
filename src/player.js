@@ -10,6 +10,7 @@ import { makeBlobShadow } from './world.js';
 import { damp, lerp, smoothstep } from './util.js';
 
 const PIVOT_H = 0.75;
+const HEAD_UP = 0.4; // radians
 
 function boardMesh() {
   const w = 0.64, l = 1.6, r = 0.3;
@@ -89,52 +90,18 @@ export class Player {
     this.root.add(this.pivot);
     this.pivot.add(this.holder);
 
-    this.model = gltf.scene;
-    prepareCharacter(this.model);
-    this.model.rotation.y = Math.PI; // the model faces +z; the runner heads toward -z
-    this.holder.add(this.model);
-
-    this.rig = new PoseRig(this.model);
-    // Poses are expressed as rotations in the character's space: +x is the sideways axis,
-    // positive angles tip "up" toward the facing direction.
-    this.rig.define('jump', [
-      ['Spine01', 'x', 0.15],
-      ['LeftUpLeg', 'x', -1.25], ['LeftLeg', 'x', 1.7],
-      ['RightUpLeg', 'x', 0.35], ['RightLeg', 'x', 1.3],
-      ['RightArm', 'x', -1.2], ['LeftArm', 'x', 0.55],
-    ]);
-    this.rig.define('tuck', [
-      ['Spine02', 'x', 0.35], ['Spine01', 'x', 0.35], ['Spine', 'x', 0.3], ['neck', 'x', 0.35],
-      ['LeftUpLeg', 'x', -2.1], ['RightUpLeg', 'x', -2.1], ['LeftLeg', 'x', 2.5], ['RightLeg', 'x', 2.5],
-      ['LeftArm', 'x', -1.3], ['RightArm', 'x', -1.3], ['LeftForeArm', 'x', -0.9], ['RightForeArm', 'x', -0.9],
-    ]);
-    this.rig.define('surf', [
-      ['Spine01', 'x', 0.15],
-      ['LeftUpLeg', 'x', -0.45], ['RightUpLeg', 'x', -0.45], ['LeftLeg', 'x', 0.85], ['RightLeg', 'x', 0.85],
-    ]);
-    this.rig.define('fly', [
-      ['LeftUpLeg', 'x', 0.2], ['RightUpLeg', 'x', -0.1], ['LeftLeg', 'x', 0.6], ['RightLeg', 'x', 0.35],
-    ]);
-    this.rig.define('crash', [
-      ['Spine01', 'x', -0.25], ['neck', 'x', -0.3],
-      ['LeftArm', 'x', -2.3], ['RightArm', 'x', -2.1],
-      ['LeftUpLeg', 'x', -0.6], ['RightUpLeg', 'x', -0.3], ['LeftLeg', 'x', 0.5],
-    ]);
-
-    this.mixer = new THREE.AnimationMixer(this.model);
-    this.run = this.mixer.clipAction(inPlaceClip(gltf.animations[0]));
-    this.run.play();
-
     this.board = boardMesh();
     this.board.position.y = -PIVOT_H + 0.12;
     this.board.visible = false;
     this.pivot.add(this.board);
 
     this.jetpack = jetpackMesh();
-    // strap the jetpack on just behind the runner's back (or backpack)
-    this.jetpack.position.set(0, 1.05, Math.max(0.24, backDepth(this.model) + 0.07));
+    this.jetpack.position.set(0, 1.05, 0.24);
     this.jetpack.visible = false;
     this.holder.add(this.jetpack);
+
+    this.model = null;
+    this.setModel(gltf);
 
     this.shadow = makeBlobShadow(1.3, 0.4);
     scene.add(this.root, this.shadow);
@@ -144,6 +111,56 @@ export class Player {
     this.lift = 0;
     this.spin = 0;
     this.reset(0);
+  }
+
+  // Switch to another runner. Each character is prepared once and cached on its glTF.
+  setModel(gltf) {
+    if (!gltf.userData.runner) {
+      const model = gltf.scene;
+      prepareCharacter(model);
+      model.rotation.y = Math.PI; // the model faces +z; the runner heads toward -z
+      const rig = new PoseRig(model);
+      // Poses are expressed as rotations in the character's space: +x is the sideways axis,
+      // positive angles tip "up" toward the facing direction.
+      rig.define('jump', [
+        ['Spine01', 'x', 0.15],
+        ['LeftUpLeg', 'x', -1.25], ['LeftLeg', 'x', 1.7],
+        ['RightUpLeg', 'x', 0.35], ['RightLeg', 'x', 1.3],
+        ['RightArm', 'x', -1.2], ['LeftArm', 'x', 0.55],
+      ]);
+      rig.define('tuck', [
+        ['Spine02', 'x', 0.35], ['Spine01', 'x', 0.35], ['Spine', 'x', 0.3], ['neck', 'x', 0.35],
+        ['LeftUpLeg', 'x', -2.1], ['RightUpLeg', 'x', -2.1], ['LeftLeg', 'x', 2.5], ['RightLeg', 'x', 2.5],
+        ['LeftArm', 'x', -1.3], ['RightArm', 'x', -1.3], ['LeftForeArm', 'x', -0.9], ['RightForeArm', 'x', -0.9],
+      ]);
+      rig.define('surf', [
+        ['Spine01', 'x', 0.15],
+        ['LeftUpLeg', 'x', -0.45], ['RightUpLeg', 'x', -0.45], ['LeftLeg', 'x', 0.85], ['RightLeg', 'x', 0.85],
+      ]);
+      rig.define('fly', [
+        ['LeftUpLeg', 'x', 0.2], ['RightUpLeg', 'x', -0.1], ['LeftLeg', 'x', 0.6], ['RightLeg', 'x', 0.35],
+      ]);
+      rig.define('crash', [
+        ['Spine01', 'x', -0.25], ['neck', 'x', -0.3],
+        ['LeftArm', 'x', -2.3], ['RightArm', 'x', -2.1],
+        ['LeftUpLeg', 'x', -0.6], ['RightUpLeg', 'x', -0.3], ['LeftLeg', 'x', 0.5],
+      ]);
+      const mixer = new THREE.AnimationMixer(model);
+      const run = mixer.clipAction(inPlaceClip(gltf.animations[0]));
+      run.play();
+      gltf.userData.runner = { model, rig, mixer, run, back: backDepth(model) };
+    }
+    const r = gltf.userData.runner;
+    if (this.model) this.holder.remove(this.model);
+    this.model = r.model;
+    this.model.visible = true;
+    this.rig = r.rig;
+    this.mixer = r.mixer;
+    this.run = r.run;
+    this.holder.add(this.model);
+    for (const k of Object.keys(this.rig.weights)) this.rig.weights[k] = 0;
+    // strap the jetpack on just behind the runner's back (or backpack)
+    this.jetpack.position.z = Math.max(0.24, r.back + 0.07);
   }
 
   reset(s) {
@@ -346,6 +363,11 @@ export class Player {
     this.mixer.timeScale = this.dead ? 0 : 0.95 + Math.max(0, speed - SPEED_START) / 34;
     this.mixer.update(dt);
     this.rig.apply();
+    // The run cycle looks down at the feet; lift the head so the runner looks ahead (and the
+    // face shows on the title screen), except while tucked or crashing.
+    const w = this.rig.weights;
+    const lookUp = HEAD_UP * (1 - w.tuck) * (1 - w.crash);
+    if (lookUp > 0.01) this.rig.tilt('Head', 'x', -lookUp);
 
     this.model.visible = !(this.invulnT > 0 && !this.dead && Math.floor(time * 14) % 2 === 0);
 

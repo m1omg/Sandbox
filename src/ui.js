@@ -1,4 +1,4 @@
-import { POWERUPS, POWERUP_TYPES, UPGRADE_COSTS, MAX_UPGRADE, HOVERBOARD_COST, HOVERBOARD_TIME, powerupDuration } from './config.js';
+import { POWERUPS, POWERUP_TYPES, UPGRADE_COSTS, MAX_UPGRADE, HOVERBOARD_COST, HOVERBOARD_TIME, RUNNERS, powerupDuration } from './config.js';
 import { formatNumber } from './util.js';
 
 const $ = (id) => document.getElementById(id);
@@ -115,6 +115,41 @@ export class UI {
     $('shop-coins').textContent = formatNumber(save.coins);
     const list = $('shop-list');
     list.innerHTML = '';
+    const head = (title, note) => {
+      const li = document.createElement('li');
+      li.className = 'shop-head';
+      li.innerHTML = `<h3>${title}</h3>${note ? `<p class="shop-note">${note}</p>` : ''}`;
+      list.appendChild(li);
+    };
+
+    // runners: pick who you play as
+    head('Runners', 'Pick who you run as. Your runner is used in both looks.');
+    const st = this.runnerState || { active: 'kit', loading: null, owns: () => true };
+    const grid = document.createElement('li');
+    grid.className = 'runner-grid';
+    for (const r of RUNNERS) {
+      const owned = st.owns(r.id);
+      const active = st.active === r.id;
+      const loading = st.loading === r.id;
+      const card = document.createElement('div');
+      card.className = `runner-card${active ? ' active' : ''}`;
+      let label;
+      if (loading) label = 'Loading…';
+      else if (active) label = 'Running';
+      else if (owned) label = 'Choose';
+      else label = `<span class="coin-icon small"></span>${formatNumber(r.cost)}`;
+      const disabled = active || !!st.loading || (!owned && save.coins < r.cost);
+      card.innerHTML = `
+        <img src="assets/portraits/${r.id}.jpg" alt="" width="96" height="96" loading="lazy">
+        <span class="name">${r.name}</span>
+        <span class="desc">${r.blurb}</span>
+        <button class="btn ${owned ? '' : 'primary'}" ${disabled ? 'disabled' : ''}>${label}</button>`;
+      card.querySelector('button').addEventListener('click', () => this.emit('runner', r.id));
+      grid.appendChild(card);
+    }
+    list.appendChild(grid);
+
+    head('Upgrades', 'Upgrades are permanent and kick in automatically every time you grab that power-up on the track.');
     for (const type of POWERUP_TYPES) {
       const lvl = save.upgrades[type];
       const maxed = lvl >= MAX_UPGRADE;

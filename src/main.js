@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { STEP, MAX_FRAME_TIME, HOVERBOARD_COST, UPGRADE_COSTS, MAX_UPGRADE } from './config.js';
-import { loadAssets } from './assets.js';
+import { STEP, MAX_FRAME_TIME, HOVERBOARD_COST, UPGRADE_COSTS, MAX_UPGRADE, RUNNERS } from './config.js';
+import { loadAssets, loadModel } from './assets.js';
 import { CLASSIC, switchTheme } from './theme.js';
 import { loadSampleData } from './samples.js';
 import { AudioSys } from './audio.js';
@@ -40,6 +40,23 @@ const input = new Input(document.getElementById('touch'));
 ui.show('loading');
 
 let game = null;
+
+// ---- runners ----
+// Kit and Remy are free; the others are bought in the shop. An empty choice means the
+// current look's default runner.
+const DEFAULT_RUNNER = CLASSIC ? 'remy' : 'kit';
+const runnerInfo = (id) => RUNNERS.find((r) => r.id === id);
+const ownsRunner = (id) => !!runnerInfo(id) && (runnerInfo(id).cost === 0 || save.owned.includes(id));
+function activeRunner() {
+  return save.runner && ownsRunner(save.runner) ? save.runner : DEFAULT_RUNNER;
+}
+const runnerModels = {};
+let runnerLoading = null;
+function refreshShop() {
+  ui.runnerState = { active: activeRunner(), loading: runnerLoading, owns: ownsRunner };
+  if (ui.current === 'shop') ui.showShop(save);
+}
+ui.runnerState = { active: activeRunner(), loading: null, owns: ownsRunner };
 
 // Browsers only allow audio after a user gesture.
 function unlockAudio() {
@@ -95,6 +112,35 @@ ui.on('toggleSfx', () => {
   writeSave(save);
   ui.setToggles(save);
 });
+ui.on('runner', async (id) => {
+  const info = runnerInfo(id);
+  if (!info || !game || runnerLoading) return;
+  if (!ownsRunner(id)) {
+    if (save.coins < info.cost) return;
+    save.coins -= info.cost;
+    save.owned.push(id);
+    audio.buy();
+  }
+  const previous = activeRunner();
+  save.runner = id;
+  writeSave(save);
+  if (!runnerModels[id]) {
+    runnerLoading = id;
+    refreshShop();
+    try {
+      runnerModels[id] = await loadModel(id);
+    } catch (err) {
+      console.error(err);
+      ui.toast(`Couldn't load ${info.name}. Check your connection and try again.`, 2600);
+      save.runner = previous; // bought runners stay unlocked
+      writeSave(save);
+    }
+    runnerLoading = null;
+  }
+  if (runnerModels[id] && activeRunner() === id) game.setRunner(runnerModels[id]);
+  refreshShop();
+});
+
 ui.on('buy', (item) => {
   if (item === 'board') {
     if (save.coins < HOVERBOARD_COST) return;
@@ -108,7 +154,7 @@ ui.on('buy', (item) => {
   }
   audio.buy();
   writeSave(save);
-  ui.showShop(save);
+  refreshShop();
 });
 
 // Menu / pause shortcuts are handled immediately; gameplay actions stay queued for the simulation.
@@ -132,9 +178,10 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('blur', () => game && game.pause());
 
 try {
-  // The classic look is built entirely from coloured geometry, so it needs no textures,
-  // and it has its own runner, Remy, instead of Kit. Its music uses recorded instrument samples. If those fail to load, the game still
-  // runs and falls back to the synthesised soundtrack.
+  // The classic look is built entirely from coloured geometry, so it needs no textures.
+  // Only the chosen runner and the warden are loaded; other runners load when picked in the
+  // shop. The classic look's music uses recorded instrument samples. If those fail to load,
+  // the game still runs and falls back to the synthesised soundtrack.
   const progress = [0, CLASSIC ? 0 : 1];
   const report = () => ui.setLoading((progress[0] + progress[1]) / 2);
   const [assets, sampleData] = await Promise.all([
@@ -142,13 +189,15 @@ try {
       renderer,
       (p) => { progress[0] = p; report(); },
       CLASSIC ? [] : undefined,
-      [CLASSIC ? 'remy' : 'kit', 'warden'],
+      [activeRunner(), 'warden'],
     ),
     CLASSIC
       ? loadSampleData((p) => { progress[1] = p; report(); }).catch((err) => { console.warn(err); return null; })
       : null,
   ]);
   if (sampleData) audio.setSampleData(sampleData);
+  assets.runner = activeRunner();
+  runnerModels[assets.runner] = assets.models[assets.runner];
   game = new Game({ scene, camera, assets, audio, save, ui, input });
   window.__game = game;
   renderer.compile(scene, camera);

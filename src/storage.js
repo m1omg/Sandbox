@@ -12,6 +12,8 @@ const DEFAULTS = {
   music: true,
   sfx: true,
   showFps: false,
+  runner: '',   // '' = the current look's default runner
+  owned: [],    // runners bought in the shop
 };
 
 function merge(base, extra) {
@@ -28,13 +30,16 @@ function merge(base, extra) {
 }
 
 export function loadSave() {
+  let save = null;
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return merge(DEFAULTS, JSON.parse(raw));
+    if (raw) save = merge(DEFAULTS, JSON.parse(raw));
   } catch (e) {
     /* storage unavailable */
   }
-  return merge(DEFAULTS, null);
+  save = save || merge(DEFAULTS, null);
+  save.owned = Array.isArray(save.owned) ? save.owned.filter((id) => typeof id === 'string') : [];
+  return save;
 }
 
 export function writeSave(save) {
