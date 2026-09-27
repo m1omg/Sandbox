@@ -35,6 +35,7 @@ The input should face +z. It is placed on the floor, centred and scaled to 1.6 m
    The weights are then smoothed over the mesh (welded across UV seams) and limited to four
    bones per vertex.
 
-`project.py` paints a view from a concept sheet onto a model's texture (used for Remy's
+`paint.py` repaints a whole model from a sheet's front and back views and colour-matches the
+sides (used for Jim's TRELLIS mesh). `project.py` paints a view from a concept sheet onto a model's texture (used for Remy's
 backpack patch). `finalize.py` shrinks a GLB for the web (1024 px JPEG texture, plain material,
 compacted buffer). `lmdebug.py` draws the silhouette with the detected landmarks and joints.
