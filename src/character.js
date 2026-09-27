@@ -31,15 +31,21 @@ export function prepareCharacter(root) {
 // Cartoon ink line for the classic look: a slightly inflated copy of the mesh that only draws
 // its back faces, in a dark colour. It shares the character's skeleton, so it follows every
 // animation and pose, and it is a child of the model, so it hides and shows with it.
+// The line is pushed a few centimetres away from the camera so that it only shows around the
+// silhouette: models built in layers (a vest over a hoodie) would otherwise have the inner
+// layer's line poke through the outer one and flicker as the character moves.
 let outlineMat = null;
-function addOutline(mesh, width = 0.016) {
+function addOutline(mesh, width = 0.016, depthBias = 0.07) {
   if (!outlineMat) {
     outlineMat = new THREE.MeshBasicMaterial({ color: 0x241a33, side: THREE.BackSide });
     outlineMat.onBeforeCompile = (shader) => {
       shader.uniforms.outlineWidth = { value: width };
+      shader.uniforms.outlineBias = { value: depthBias };
       shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nuniform float outlineWidth;')
-        .replace('#include <begin_vertex>', 'vec3 transformed = position + normal * outlineWidth;');
+        .replace('#include <common>', '#include <common>\nuniform float outlineWidth;\nuniform float outlineBias;')
+        .replace('#include <begin_vertex>', 'vec3 transformed = position + normal * outlineWidth;')
+        // push along the line of sight, so the line stays in place on screen
+        .replace('#include <project_vertex>', '#include <project_vertex>\nmvPosition.xyz *= 1.0 + outlineBias / max(length(mvPosition.xyz), 0.001);\ngl_Position = projectionMatrix * mvPosition;');
     };
   }
   const line = new THREE.SkinnedMesh(mesh.geometry, outlineMat);
