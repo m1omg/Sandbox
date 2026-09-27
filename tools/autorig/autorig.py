@@ -176,13 +176,24 @@ def skin_weights(P, I, J, L, names, R, smooth_iters=12):
         acc = np.zeros_like(W); np.add.at(acc, e[:, 0], W[e[:, 1]]); np.add.at(acc, e[:, 1], W[e[:, 0]])
         nb = acc / np.maximum(deg, 1)[:, None]
         W = 0.5 * W + 0.5 * np.where(deg[:, None] > 0, nb, W)
+    hk, sk = bones.index('Head'), bones.index('Spine')
+    neck_top = L['neck'][0]  # narrowest point of the neck
+    nz = J['neck'][2] - 0.04
     # Long hair hanging behind the neck (braids, ponytails): follow the head at the roots and
     # blend to the upper back toward the tips, so it bends instead of swinging rigidly.
-    hk, sk = bones.index('Head'), bones.index('Spine')
-    hy, nz = J['Head'][1] - 0.05, J['neck'][2] - 0.04
-    hair = (owner == hk) & (Pw[:, 1] < hy) & (Pw[:, 2] < nz)
-    if hair.sum() > 20:
-        t = np.clip((hy - Pw[hair, 1]) / max(hy - Pw[hair, 1].min(), 1e-6), 0, 1)
+    hair = (owner == hk) & (Pw[:, 1] < neck_top) & (Pw[:, 2] < nz)
+    if hair.sum() <= 20: hair[:] = False
+    # The head moves as one piece: everything above the narrowest point of the neck (chin,
+    # face, skull, hair, a cap) follows the head bone rigidly, with a short blend into the
+    # neck below it. If the jaw followed the torso, the face would slide under a cap and
+    # stretch whenever the head turned or nodded.
+    y = Pw[:, 1]
+    t = np.clip((y - (neck_top - 0.02)) / 0.05, 0, 1); rigid = t * t * (3 - 2 * t)
+    rigid[hair] = 0
+    head1 = np.zeros_like(W); head1[:, hk] = 1
+    W = rigid[:, None] * head1 + (1 - rigid[:, None]) * W
+    if hair.any():
+        t = np.clip((neck_top - y[hair]) / max(neck_top - y[hair].min(), 1e-6), 0, 1)
         wh = 1 - t * t * (3 - 2 * t)
         W[hair] = 0; W[hair, hk] = wh; W[hair, sk] = 1 - wh
     # keep the four strongest influences

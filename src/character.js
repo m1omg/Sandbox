@@ -123,6 +123,23 @@ export class PoseRig {
     this.restHips = this.hips ? this.hips.position.clone() : null;
     this.poses = {};
     this.weights = {};
+    // the animated pose before our layers, see restore()
+    this.animated = this.list.map((b) => b.quaternion.clone());
+    this.animatedHips = this.restHips ? this.restHips.clone() : null;
+  }
+
+  // three.js's mixer only writes a bone when its animated value has changed since the last
+  // update. Our layers (poses, tilts) edit the bones after the mixer, so a bone the mixer skips
+  // would keep last frame's layers and get them added again, making the head jump for a frame.
+  // Call restore() before mixer.update() and capture() right after it.
+  restore() {
+    this.list.forEach((b, i) => b.quaternion.copy(this.animated[i]));
+    if (this.hips) this.hips.position.copy(this.animatedHips);
+  }
+
+  capture() {
+    this.list.forEach((b, i) => this.animated[i].copy(b.quaternion));
+    if (this.hips) this.animatedHips.copy(this.hips.position);
   }
 
   // deltas: [[boneName, axis, angle], ...] applied on top of the rest (A-) pose.
